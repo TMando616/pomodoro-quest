@@ -4,22 +4,26 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Shield, Swords, Trophy, Zap, Crown } from 'lucide-react';
 
 export default function PomodoroQuest() {
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
-  const [isActive, setIsActive] = useState(false);
-  const [exp, setExp] = useState(0);
-  const [level, setLevel] = useState(1);
-  const [message, setMessage] = useState("");
+  // --- 状態管理 (State Management) ---
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // 残り時間（秒）
+  const [isActive, setIsActive] = useState(false);  // タイマーが動作中かどうか
+  const [exp, setExp] = useState(0);                 // 現在の経験値
+  const [level, setLevel] = useState(1);             // 現在のレベル
+  const [message, setMessage] = useState("");        // 通知メッセージ
 
+  // 秒を MM:SS 形式に変換するヘルパー関数
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // クエスト完了（タイマー終了）時の処理
   const handleQuestComplete = useCallback(() => {
     setIsActive(false);
-    setTimeLeft(25 * 60);
+    setTimeLeft(25 * 60); // タイマーをリセット
     
+    // 経験値の加算とレベルアップ判定
     setExp((prevExp) => {
       const newExp = prevExp + 100;
       if (newExp >= 1000) {
@@ -31,9 +35,11 @@ export default function PomodoroQuest() {
       return newExp;
     });
 
+    // 5秒後にメッセージを消す
     setTimeout(() => setMessage(""), 5000);
   }, []);
 
+  // タイマーのカウントダウン処理
   useEffect(() => {
     let interval: any = null;
     if (isActive && timeLeft > 0) {
@@ -41,13 +47,16 @@ export default function PomodoroQuest() {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0 && isActive) {
+      // 時間切れになったらクエスト完了処理を呼ぶ
       handleQuestComplete();
     }
     return () => clearInterval(interval);
   }, [isActive, timeLeft, handleQuestComplete]);
 
+  // タイマーの開始/一時停止を切り替える
   const toggleTimer = () => setIsActive(!isActive);
   
+  // タイマーを初期状態にリセットする
   const resetTimer = () => {
     setIsActive(false);
     setTimeLeft(25 * 60);
@@ -56,7 +65,7 @@ export default function PomodoroQuest() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center font-mono p-4 selection:bg-emerald-500/30">
-      {/* HUD - Stats Bar */}
+      {/* HUD - ステータスバー（レベルと経験値の表示） */}
       <div className="w-full max-w-md mb-16 bg-slate-900 border-2 border-emerald-500/20 rounded-xl p-5 shadow-[0_0_30px_rgba(0,0,0,0.6)] backdrop-blur-sm">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-3">
@@ -76,6 +85,7 @@ export default function PomodoroQuest() {
           </div>
         </div>
         
+        {/* 経験値バー */}
         <div className="relative w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-emerald-900/50">
           <div 
             className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-[0_0_15px_#10b981] transition-all duration-700 ease-out"
@@ -96,7 +106,7 @@ export default function PomodoroQuest() {
         </div>
       </div>
 
-      {/* Main Quest Interface */}
+      {/* メインクエストインターフェース（タイマー部分） */}
       <div className="relative">
         <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-emerald-500/5 rounded-full ${isActive ? 'animate-pulse' : ''}`} />
         
@@ -111,6 +121,7 @@ export default function PomodoroQuest() {
               </span>
             </div>
 
+            {/* 残り時間の表示 */}
             <div className={`text-8xl font-black tracking-tighter ${
               isActive 
                 ? 'text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.7)]' 
@@ -119,6 +130,7 @@ export default function PomodoroQuest() {
               {formatTime(timeLeft)}
             </div>
 
+            {/* クエスト完了メッセージ */}
             {message && (
               <div className="absolute -bottom-12 whitespace-nowrap animate-bounce">
                 <div className="bg-emerald-500 text-slate-950 text-[10px] font-black py-2 px-6 rounded-lg shadow-[0_0_20px_rgba(16,185,129,0.6)] uppercase tracking-[0.2em] border-2 border-emerald-300">
@@ -127,6 +139,7 @@ export default function PomodoroQuest() {
               </div>
             )}
             
+            {/* プログレスサークル */}
             <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none">
               <circle
                 cx="160" cy="160" r="154"
@@ -148,6 +161,7 @@ export default function PomodoroQuest() {
             </svg>
           </div>
 
+          {/* 操作ボタン */}
           <div className="flex gap-8 mt-20">
             <button
               onClick={toggleTimer}
@@ -175,6 +189,7 @@ export default function PomodoroQuest() {
         </main>
       </div>
 
+      {/* 装飾用アイコン */}
       <div className="mt-20 flex gap-12 opacity-20">
         <Trophy className="w-6 h-6 text-emerald-500" />
         <Crown className="w-6 h-6 text-emerald-500" />
