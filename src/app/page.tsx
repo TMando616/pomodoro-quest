@@ -41,16 +41,23 @@ export default function PomodoroQuest() {
 
   // タイマーのカウントダウン処理
   useEffect(() => {
-    let interval: any = null;
+    let interval: ReturnType<typeof setInterval> | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0 && isActive) {
       // 時間切れになったらクエスト完了処理を呼ぶ
-      handleQuestComplete();
+      // 非同期に呼び出すことで render cycle 中の setState を避ける
+      timeoutId = setTimeout(handleQuestComplete, 0);
     }
-    return () => clearInterval(interval);
+
+    return () => {
+      if (interval) clearInterval(interval);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [isActive, timeLeft, handleQuestComplete]);
 
   // タイマーの開始/一時停止を切り替える
