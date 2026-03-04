@@ -42,22 +42,24 @@ export default function PomodoroQuest() {
     setIsActive(false);
     setTimeLeft(duration * 60);
 
+    const earnedExp = duration * 10;
+
     if (currentUser) {
-      const newExp = currentUser.exp + 100;
+      const newExp = currentUser.exp + earnedExp;
       let newLevel = currentUser.level;
       let finalExp = newExp;
 
       if (newExp >= 1000) {
         newLevel += 1;
         finalExp = newExp - 1000;
-        setMessage("LEVEL UP! QUEST CLEAR!");
+        setMessage(`LEVEL UP! QUEST CLEAR! +${earnedExp} EXP`);
       } else {
-        setMessage("QUEST CLEAR! +100 EXP");
+        setMessage(`QUEST CLEAR! +${earnedExp} EXP`);
       }
 
       setCurrentUser({ ...currentUser, level: newLevel, exp: finalExp });
     } else {
-      setMessage("QUEST CLEAR! (Sign in to save progress)");
+      setMessage(`QUEST CLEAR! +${earnedExp} EXP (Sign in to save)`);
     }
     
     setTimeout(() => setMessage(""), 5000);
