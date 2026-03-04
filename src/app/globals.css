@@ -1,11 +1,91 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617; /* slate-950 */
-  --foreground: #f8fafc; /* slate-50 */
+  /* Default: Dark Emerald */
+  --background-rgb: 2 6 23;    /* slate-950 */
+  --foreground-rgb: 248 250 252; /* slate-50 */
+  --primary-rgb: 16 185 129;
+  --primary-foreground-rgb: 2 6 23;
+}
+
+/* --- Dark Themes --- */
+[data-theme="ruby"] {
+  --background-rgb: 2 6 23;
+  --foreground-rgb: 248 250 252;
+  --primary-rgb: 244 63 94;
+  --primary-foreground-rgb: 255 255 255;
+}
+
+[data-theme="sapphire"] {
+  --background-rgb: 2 6 23;
+  --foreground-rgb: 248 250 252;
+  --primary-rgb: 59 130 246;
+  --primary-foreground-rgb: 255 255 255;
+}
+
+[data-theme="amber"] {
+  --background-rgb: 2 6 23;
+  --foreground-rgb: 248 250 252;
+  --primary-rgb: 245 158 11;
+  --primary-foreground-rgb: 2 6 23;
+}
+
+[data-theme="amethyst"] {
+  --background-rgb: 2 6 23;
+  --foreground-rgb: 248 250 252;
+  --primary-rgb: 168 85 247;
+  --primary-foreground-rgb: 255 255 255;
+}
+
+/* --- Light Themes --- */
+[data-theme="emerald-light"] {
+  --background-rgb: 240 253 244; /* emerald-50 */
+  --foreground-rgb: 6 78 59;    /* emerald-900 */
+  --primary-rgb: 5 150 105;     /* emerald-600 */
+  --primary-foreground-rgb: 255 255 255;
+}
+
+[data-theme="ruby-light"] {
+  --background-rgb: 255 241 242; /* rose-50 */
+  --foreground-rgb: 159 18 57;    /* rose-900 */
+  --primary-rgb: 225 29 72;      /* rose-600 */
+  --primary-foreground-rgb: 255 255 255;
+}
+
+[data-theme="sapphire-light"] {
+  --background-rgb: 239 246 255; /* blue-50 */
+  --foreground-rgb: 30 58 138;   /* blue-900 */
+  --primary-rgb: 37 99 235;      /* blue-600 */
+  --primary-foreground-rgb: 255 255 255;
+}
+
+[data-theme="amber-light"] {
+  --background-rgb: 255 251 235; /* amber-50 */
+  --foreground-rgb: 120 53 15;   /* amber-900 */
+  --primary-rgb: 217 119 6;      /* amber-600 */
+  --primary-foreground-rgb: 255 255 255;
+}
+
+[data-theme="amethyst-light"] {
+  --background-rgb: 250 245 255; /* purple-50 */
+  --foreground-rgb: 88 28 135;   /* purple-900 */
+  --primary-rgb: 147 51 234;     /* purple-600 */
+  --primary-foreground-rgb: 255 255 255;
+}
+
+@theme {
+  --color-primary: rgb(var(--primary-rgb));
+  --color-primary-foreground: rgb(var(--primary-foreground-rgb));
+  --color-primary-glow: rgba(var(--primary-rgb), 0.5);
+  
+  --color-background: rgb(var(--background-rgb));
+  --color-foreground: rgb(var(--foreground-rgb));
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: rgb(var(--background-rgb));
+  color: rgb(var(--foreground-rgb));
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
