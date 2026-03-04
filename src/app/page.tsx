@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Shield, Swords, Trophy, Zap, Crown, Palette, Sun, Moon } from 'lucide-react';
+import { Play, Pause, RotateCcw, Shield, Swords, Trophy, Zap, Crown, Palette, Sun, Moon, Timer } from 'lucide-react';
 
 const themes = {
   dark: [
@@ -20,8 +20,12 @@ const themes = {
   ]
 };
 
+// 5分から60分まで5分刻みのリスト
+const durationOptions = Array.from({ length: 12 }, (_, i) => (i + 1) * 5);
+
 export default function PomodoroQuest() {
   // --- 状態管理 ---
+  const [duration, setDuration] = useState(25); // 選択された時間（分）
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
   const [exp, setExp] = useState(0);
@@ -42,7 +46,7 @@ export default function PomodoroQuest() {
 
   const handleQuestComplete = useCallback(() => {
     setIsActive(false);
-    setTimeLeft(25 * 60);
+    setTimeLeft(duration * 60);
     setExp((prevExp) => {
       const newExp = prevExp + 100;
       if (newExp >= 1000) {
@@ -54,7 +58,7 @@ export default function PomodoroQuest() {
       return newExp;
     });
     setTimeout(() => setMessage(""), 5000);
-  }, []);
+  }, [duration]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -71,53 +75,89 @@ export default function PomodoroQuest() {
   }, [isActive, timeLeft, handleQuestComplete]);
 
   const toggleTimer = () => setIsActive(!isActive);
+  
   const resetTimer = () => {
     setIsActive(false);
-    setTimeLeft(25 * 60);
+    setTimeLeft(duration * 60);
     setMessage("");
+  };
+
+  // 時間設定の変更
+  const selectDuration = (mins: number) => {
+    if (isActive) return; // 動作中は変更不可
+    setDuration(mins);
+    setTimeLeft(mins * 60);
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center font-mono p-4 md:p-8 selection:bg-primary/30 transition-colors duration-500 overflow-x-hidden">
       
-      {/* テーマセレクター */}
-      <div className="fixed top-4 right-4 md:top-8 md:right-8 flex flex-col items-end gap-3 z-50">
-        {/* Dark Themes */}
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-2 px-3 py-1 bg-slate-900/40 border border-primary/20 rounded-full backdrop-blur-md">
-            <Moon className="w-3 h-3 text-primary" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-primary/80">Shadow</span>
+      {/* サイドパネル（右側固定） */}
+      <div className="fixed top-4 right-4 md:top-8 md:right-8 flex flex-col items-end gap-6 z-50 max-h-[90vh] overflow-y-auto pr-1 scrollbar-hide">
+        
+        {/* テーマセレクター */}
+        <div className="flex flex-col items-end gap-3">
+          {/* Dark Themes */}
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2 px-3 py-1 bg-slate-900/40 border border-primary/20 rounded-full backdrop-blur-md">
+              <Moon className="w-3 h-3 text-primary" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-primary/80">Shadow</span>
+            </div>
+            <div className="flex gap-1.5 p-1.5 bg-slate-900/40 border border-primary/20 rounded-xl backdrop-blur-md shadow-xl">
+              {themes.dark.map((theme) => (
+                <button
+                  key={theme.name}
+                  onClick={() => setCurrentTheme(theme.name)}
+                  className={`w-6 h-6 md:w-7 md:h-7 rounded-lg transition-all duration-300 transform hover:scale-110 active:scale-90 ${theme.color} ${
+                    currentTheme === theme.name ? 'ring-2 ring-white scale-110 shadow-lg' : 'opacity-40 hover:opacity-100'
+                  }`}
+                  title={theme.label}
+                />
+              ))}
+            </div>
           </div>
-          <div className="flex gap-1.5 p-1.5 bg-slate-900/40 border border-primary/20 rounded-xl backdrop-blur-md shadow-xl">
-            {themes.dark.map((theme) => (
-              <button
-                key={theme.name}
-                onClick={() => setCurrentTheme(theme.name)}
-                className={`w-6 h-6 md:w-7 md:h-7 rounded-lg transition-all duration-300 transform hover:scale-110 active:scale-90 ${theme.color} ${
-                  currentTheme === theme.name ? 'ring-2 ring-white scale-110 shadow-lg' : 'opacity-40 hover:opacity-100'
-                }`}
-                title={theme.label}
-              />
-            ))}
+
+          {/* Light Themes */}
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2 px-3 py-1 bg-white/40 border border-primary/20 rounded-full backdrop-blur-md">
+              <Sun className="w-3 h-3 text-primary" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-primary/80">Radiance</span>
+            </div>
+            <div className="flex gap-1.5 p-1.5 bg-white/40 border border-primary/20 rounded-xl backdrop-blur-md shadow-xl">
+              {themes.light.map((theme) => (
+                <button
+                  key={theme.name}
+                  onClick={() => setCurrentTheme(theme.name)}
+                  className={`w-6 h-6 md:w-7 md:h-7 rounded-lg transition-all duration-300 transform hover:scale-110 active:scale-90 ${theme.color} ${
+                    currentTheme === theme.name ? 'ring-2 ring-slate-800 scale-110 shadow-lg' : 'opacity-40 hover:opacity-100'
+                  }`}
+                  title={theme.label}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Light Themes */}
+        {/* クエスト時間セレクター（テーマボタンの下に配置） */}
         <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-2 px-3 py-1 bg-white/40 border border-primary/20 rounded-full backdrop-blur-md">
-            <Sun className="w-3 h-3 text-primary" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-primary/80">Radiance</span>
+          <div className="flex items-center gap-2 px-3 py-1 bg-background/40 border border-primary/20 rounded-full backdrop-blur-md">
+            <Timer className="w-3 h-3 text-primary" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-primary/80">Quest</span>
           </div>
-          <div className="flex gap-1.5 p-1.5 bg-white/40 border border-primary/20 rounded-xl backdrop-blur-md shadow-xl">
-            {themes.light.map((theme) => (
+          <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-background/40 border border-primary/20 rounded-xl backdrop-blur-md shadow-xl w-fit">
+            {durationOptions.map((mins) => (
               <button
-                key={theme.name}
-                onClick={() => setCurrentTheme(theme.name)}
-                className={`w-6 h-6 md:w-7 md:h-7 rounded-lg transition-all duration-300 transform hover:scale-110 active:scale-90 ${theme.color} ${
-                  currentTheme === theme.name ? 'ring-2 ring-slate-800 scale-110 shadow-lg' : 'opacity-40 hover:opacity-100'
+                key={mins}
+                onClick={() => selectDuration(mins)}
+                disabled={isActive}
+                className={`w-9 h-7 md:w-10 md:h-8 rounded-lg font-black text-[10px] transition-all duration-300 flex items-center justify-center ${
+                  duration === mins
+                    ? 'bg-primary text-primary-foreground shadow-[0_0_10px_var(--color-primary)] scale-105 z-10'
+                    : 'bg-foreground/5 opacity-40 hover:opacity-80 disabled:opacity-10'
                 }`}
-                title={theme.label}
-              />
+              >
+                {mins}m
+              </button>
             ))}
           </div>
         </div>
@@ -203,7 +243,7 @@ export default function PomodoroQuest() {
                   stroke="currentColor"
                   strokeWidth="4"
                   strokeDasharray={967}
-                  strokeDashoffset={967 - (967 * (timeLeft / (25 * 60)))}
+                  strokeDashoffset={967 - (967 * (timeLeft / (duration * 60)))}
                   className={`${isActive ? 'text-primary' : 'opacity-10'} transition-all duration-1000 ease-linear`}
                   strokeLinecap="round"
                 />
