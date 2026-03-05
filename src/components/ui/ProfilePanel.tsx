@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Crown, Check, X } from 'lucide-react';
-import { User, Title } from '@/types';
+import { User } from '@/types';
 import { titles } from '@/constants';
 
 type ProfilePanelProps = {

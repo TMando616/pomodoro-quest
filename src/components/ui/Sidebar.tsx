@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Moon, Sun, Timer, LogIn, LogOut, ScrollText, Volume2, VolumeX } from 'lucide-react';
+import { Moon, Sun, LogIn, LogOut, ScrollText, Volume2, VolumeX } from 'lucide-react';
 import { ThemeCategory, User } from '@/types';
 import { themes, durationOptions } from '@/constants';
 

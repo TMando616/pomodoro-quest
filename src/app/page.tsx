@@ -21,44 +21,47 @@ export default function PomodoroQuest() {
   const [isBossMode, setIsBossMode] = useState(false);
   const [message, setMessage] = useState("");
   const [currentTheme, setCurrentTheme] = useState('emerald');
-  const [isSoundOn, setIsSoundOn] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    const saved = localStorage.getItem('pq_sound');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
+  const [isSoundOn, setIsSoundOn] = useState(true);
 
   // --- Auth & Persistence State ---
-  const [users, setUsers] = useState<User[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const saved = localStorage.getItem('pq_users');
-    if (saved) return JSON.parse(saved);
-    return [{ id: '1', username: 'Hero', level: 1, exp: 0, unlockedTitles: ['novice'], currentTitleId: 'novice' }];
-  });
-
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const saved = localStorage.getItem('pq_current_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const [questLogs, setQuestLogs] = useState<QuestLog[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const saved = localStorage.getItem('pq_logs');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [users, setUsers] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [questLogs, setQuestLogs] = useState<QuestLog[]>([]);
   const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none');
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [authForm, setAuthForm] = useState({ username: '' });
   const [authError, setAuthError] = useState("");
 
-  useEffect(() => { localStorage.setItem('pq_users', JSON.stringify(users)); }, [users]);
+  // 初期化 (Hydration Error & Lint Error回避のため)
+  useEffect(() => {
+    const init = () => {
+      const savedUsers = localStorage.getItem('pq_users');
+      if (savedUsers) setUsers(JSON.parse(savedUsers));
+      else setUsers([{ id: '1', username: 'Hero', level: 1, exp: 0, unlockedTitles: ['novice'], currentTitleId: 'novice' }]);
+
+      const savedSession = localStorage.getItem('pq_current_user');
+      if (savedSession) setCurrentUser(JSON.parse(savedSession));
+
+      const savedLogs = localStorage.getItem('pq_logs');
+      if (savedLogs) setQuestLogs(JSON.parse(savedLogs));
+
+      const savedSound = localStorage.getItem('pq_sound');
+      if (savedSound !== null) setIsSoundOn(JSON.parse(savedSound));
+    };
+    
+    // setTimeoutを使用して同期的実行を避ける
+    const timer = setTimeout(init, 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 永続化
+  useEffect(() => { if (users.length > 0) localStorage.setItem('pq_users', JSON.stringify(users)); }, [users]);
   useEffect(() => {
     if (currentUser) localStorage.setItem('pq_current_user', JSON.stringify(currentUser));
-    else localStorage.removeItem('pq_current_user');
-  }, [currentUser]);
-  useEffect(() => { localStorage.setItem('pq_logs', JSON.stringify(questLogs)); }, [questLogs]);
+    else if (users.length > 0) localStorage.removeItem('pq_current_user');
+  }, [currentUser, users.length]);
+  useEffect(() => { if (questLogs.length > 0) localStorage.setItem('pq_logs', JSON.stringify(questLogs)); }, [questLogs]);
   useEffect(() => { localStorage.setItem('pq_sound', JSON.stringify(isSoundOn)); }, [isSoundOn]);
 
   const updateCurrentUserAndList = useCallback((updatedUser: User) => {
@@ -85,7 +88,6 @@ export default function PomodoroQuest() {
 
   const playEffect = useCallback((type: 'click' | 'complete' | 'level-up' | 'boss') => {
     if (!isSoundOn) return;
-    // 擬似的なサウンド演出（コンソール表示と視覚演出）
     console.log(`[Sound Effect]: ${type}`);
   }, [isSoundOn]);
 
@@ -156,6 +158,41 @@ export default function PomodoroQuest() {
     setTimeLeft(mode === 'quest' ? duration * 60 : 5 * 60); 
   };
 
+  const handleAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+    if (!authForm.username.trim()) {
+      setAuthError("Enter your adventurer name.");
+      return;
+    }
+    if (isAuthMode === 'register') {
+      if (users.find(u => u.username === authForm.username)) {
+        setAuthError("Name already taken.");
+        return;
+      }
+      const newUser: User = { 
+        id: Date.now().toString(), 
+        username: authForm.username, 
+        level: 1, 
+        exp: 0, 
+        unlockedTitles: ['novice'], 
+        currentTitleId: 'novice' 
+      };
+      setUsers(prev => [...prev, newUser]);
+      setCurrentUser(newUser);
+      setIsAuthMode('none');
+    } else {
+      const user = users.find(u => u.username === authForm.username);
+      if (!user) {
+        setAuthError("Adventurer not found.");
+        return;
+      }
+      setCurrentUser(user);
+      setIsAuthMode('none');
+    }
+    setAuthForm({ username: '' });
+  };
+
   const userLogs = currentUser ? questLogs.filter(log => log.userId === currentUser.id) : questLogs.filter(log => log.userId === 'guest');
   const currentTitle = titles.find(t => t.id === currentUser?.currentTitleId)?.name;
 
@@ -220,7 +257,7 @@ export default function PomodoroQuest() {
             {isBossMode && isActive && <div className="flex items-center gap-2 text-red-500 animate-bounce"><Flame className="w-4 h-4 fill-current" /><span className="text-[10px] font-black uppercase tracking-[0.3em]">Extreme Concentration Required</span><Flame className="w-4 h-4 fill-current" /></div>}
             <TimerDisplay timeLeft={timeLeft} duration={mode === 'quest' ? duration : (timeLeft > 5*60 ? 15 : 5)} isActive={isActive} message={message} formatTime={formatTime} questName={isBossMode ? `BOSS: ${questName || "ANCIENT EVIL"}` : (mode === 'rest' ? "Resting at Inn" : questName)} />
             <div className="flex gap-8 md:gap-10">
-              <button onClick={toggleTimer} disabled={isActive && isBossMode} className={`group relative w-20 h-20 md:w-24 md:h-24 rounded-[2.5rem] transition-all duration-300 transform active:scale-90 flex items-center justify-center border-b-4 ${isActive ? (isBossMode ? 'bg-red-900/40 border-red-950 opacity-50 cursor-not-allowed' : 'bg-foreground/10 border-foreground/20') : (isBossMode ? 'bg-red-600 border-red-800 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : 'bg-primary border-primary/50 text-primary-foreground')}`}>{isActive ? <Pause className="w-8 h-8 md:w-10 md:h-10" /> : <Play className="w-8 h-8 md:w-10 md:h-10 ml-1" />}<div className={`absolute -inset-2 blur-2xl opacity-0 group-hover:opacity-20 transition-opacity rounded-full ${isActive ? 'bg-foreground' : (isBossMode ? 'bg-red-500' : 'bg-primary')}`} /></button>
+              <button onClick={toggleTimer} disabled={isActive && isBossMode} className={`group relative w-20 h-20 md:w-24 md:h-24 rounded-[2.5rem] transition-all duration-300 transform active:scale-90 flex items-center justify-center border-b-4 ${isActive ? (isBossMode ? 'bg-red-900/40 border-red-950 opacity-50 cursor-not-allowed' : 'bg-foreground/10 border-foreground/20') : (isBossMode ? 'bg-red-600 border-red-800 text-white shadow-[0_0_30px_rgba(220,38,38,0.4)]' : 'bg-primary border-primary/50 text-primary-foreground')}`}>{isActive ? <Pause className="w-8 h-8 md:w-10 md:h-10" /> : <Play className="w-8 h-8 md:w-10 md:h-10 ml-1" />}<div className={`absolute -inset-2 blur-2xl opacity-0 group-hover:opacity-20 transition-opacity rounded-full ${isActive ? 'bg-foreground' : (isBossMode ? 'bg-red-500' : 'bg-primary')}`} /></button>
               <button onClick={resetTimer} className="group relative w-20 h-20 md:w-24 md:h-24 rounded-[2.5rem] bg-foreground/5 border-b-4 border-foreground/10 hover:bg-foreground/10 transition-all duration-300 transform active:scale-90 flex items-center justify-center shadow-lg"><RotateCcw className="w-8 h-8 md:w-9 md:h-9 opacity-40 group-hover:opacity-100 group-hover:rotate-[-45deg] transition-all" /></button>
             </div>
           </div>
