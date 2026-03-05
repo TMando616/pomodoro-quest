@@ -1,43 +1,43 @@
 @import "tailwindcss";
 
+/* 
+ * 動的なテーマ切り替えを実現するためのCSS変数設定
+ * :root 内にデフォルト（Emerald）の設定を記述し、
+ * [data-theme="..."] で各色の設定を上書きします。
+ */
+
 :root {
-  /* Default: Dark Emerald */
+  /* 背景と文字色のベース（RGB値で保持することで、透明度の調整を容易にします） */
   --background-rgb: 2 6 23;    /* slate-950 */
   --foreground-rgb: 248 250 252; /* slate-50 */
+  
+  /* デフォルトのメインカラー：Emerald (#10b981) */
   --primary-rgb: 16 185 129;
   --primary-foreground-rgb: 2 6 23;
 }
 
-/* --- Dark Themes --- */
+/* --- Dark Themes（闇の属性） --- */
 [data-theme="ruby"] {
-  --background-rgb: 2 6 23;
-  --foreground-rgb: 248 250 252;
   --primary-rgb: 244 63 94;
   --primary-foreground-rgb: 255 255 255;
 }
 
 [data-theme="sapphire"] {
-  --background-rgb: 2 6 23;
-  --foreground-rgb: 248 250 252;
   --primary-rgb: 59 130 246;
   --primary-foreground-rgb: 255 255 255;
 }
 
 [data-theme="amber"] {
-  --background-rgb: 2 6 23;
-  --foreground-rgb: 248 250 252;
   --primary-rgb: 245 158 11;
   --primary-foreground-rgb: 2 6 23;
 }
 
 [data-theme="amethyst"] {
-  --background-rgb: 2 6 23;
-  --foreground-rgb: 248 250 252;
   --primary-rgb: 168 85 247;
   --primary-foreground-rgb: 255 255 255;
 }
 
-/* --- Light Themes --- */
+/* --- Light Themes（光の属性） --- */
 [data-theme="emerald-light"] {
   --background-rgb: 240 253 244; /* emerald-50 */
   --foreground-rgb: 6 78 59;    /* emerald-900 */
@@ -73,6 +73,10 @@
   --primary-foreground-rgb: 255 255 255;
 }
 
+/* 
+ * Tailwind CSS v4 のカスタムテーマ設定
+ * 上記のCSS変数をTailwindのクラス（text-primary, bg-backgroundなど）として使えるようにします。
+ */
 @theme {
   --color-primary: rgb(var(--primary-rgb));
   --color-primary-foreground: rgb(var(--primary-foreground-rgb));
@@ -82,10 +86,12 @@
   --color-foreground: rgb(var(--foreground-rgb));
 }
 
+/* ボディ全体の基本スタイル */
 body {
   background-color: rgb(var(--background-rgb));
   color: rgb(var(--foreground-rgb));
   margin: 0;
   padding: 0;
+  /* テーマ切り替え時に色が滑らかに変わるようにアニメーションを設定 */
   transition: background-color 0.5s ease, color 0.5s ease;
 }

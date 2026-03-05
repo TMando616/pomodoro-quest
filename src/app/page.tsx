@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+// Lucide React からアイコンをインポート
 import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw } from 'lucide-react';
+// 型定義と定数をインポート
 import { QuestLog } from '@/types';
 import { titles } from '@/constants';
+// UIコンポーネントをインポート
 import { HUD } from '@/components/ui/HUD';
 import { Sidebar } from '@/components/ui/Sidebar';
 import { AuthOverlay } from '@/components/ui/AuthOverlay';
@@ -11,92 +14,143 @@ import { TimerDisplay } from '@/components/ui/TimerDisplay';
 import { QuestLogPanel } from '@/components/ui/QuestLogPanel';
 import { ProfilePanel } from '@/components/ui/ProfilePanel';
 
-// Hooks
+// ロジックを管理するカスタムフックをインポート
 import { useAudio } from '@/hooks/useAudio';
 import { useUser } from '@/hooks/useUser';
 import { useTimer } from '@/hooks/useTimer';
 
+/**
+ * メインのアプリケーションコンポーネント
+ * ポモドーロタイマーとRPG要素を組み合わせたメイン画面を提供します。
+ */
 export default function PomodoroQuest() {
-  const [message, setMessage] = useState("");
-  const [currentTheme, setCurrentTheme] = useState('emerald');
-  const [isLogsOpen, setIsLogsOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none');
-  const [authForm, setAuthForm] = useState({ username: '' });
-  const [authError, setAuthError] = useState("");
+  // --- UI表示用の状態管理 ---
+  const [message, setMessage] = useState(""); // 画面中央に表示する通知メッセージ
+  const [currentTheme, setCurrentTheme] = useState('emerald'); // 現在選択されているテーマ名
+  const [isLogsOpen, setIsLogsOpen] = useState(false); // 履歴パネルが開いているか
+  const [isProfileOpen, setIsProfileOpen] = useState(false); // プロフィールパネルが開いているか
+  const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none'); // 認証画面の状態
+  const [authForm, setAuthForm] = useState({ username: '' }); // ログイン/登録フォームの入力値
+  const [authError, setAuthError] = useState(""); // 認証エラーメッセージ
 
+  // --- カスタムフックからロジックを抽出 ---
+  // サウンド再生に関連する機能
   const { isSoundOn, playEffect, toggleSound } = useAudio();
+  
+  // ユーザーデータ、進捗、認証に関連する機能
   const { 
     currentUser, questLogs, updateCurrentUserAndList, 
     addQuestLog, checkNewTitles, login, register, logout 
   } = useUser();
 
+  /**
+   * タイマーが完了した時の処理
+   * 集中（Quest）完了なら経験値加算、休憩（Rest）完了なら通知のみを行います。
+   */
   const handleComplete = useCallback((mode: 'quest' | 'rest', isBoss: boolean, duration: number, qName: string) => {
-    playEffect('complete');
+    playEffect('complete'); // 完了音を鳴らす
     
     if (mode === 'quest') {
+      // 経験値計算：分数 × 10。ボスモードなら2倍
       let earnedExp = duration * 10;
       if (isBoss) earnedExp *= 2;
 
+      // 履歴データの作成
       const displayName = isBoss ? `BOSS: ${qName || "Unknown"}` : (qName || "Quest");
-      const newLog: QuestLog = { id: Date.now().toString(), userId: currentUser?.id || 'guest', name: displayName, duration, earnedExp, createdAt: Date.now() };
+      const newLog: QuestLog = { 
+        id: Date.now().toString(), 
+        userId: currentUser?.id || 'guest', 
+        name: displayName, 
+        duration, 
+        earnedExp, 
+        createdAt: Date.now() 
+      };
       
-      addQuestLog(newLog);
+      addQuestLog(newLog); // 履歴に追加
 
       if (currentUser) {
+        // 経験値加算とレベルアップ判定
         const newExp = currentUser.exp + earnedExp;
         let newLevel = currentUser.level;
         let finalExp = newExp;
+
         if (newExp >= 1000) { 
-          newLevel += 1; finalExp = newExp - 1000; 
+          newLevel += 1; 
+          finalExp = newExp - 1000; 
           setMessage(`LEVEL UP! ${displayName} DEFEATED! +${earnedExp} EXP`); 
-          setTimeout(() => playEffect('level-up'), 500);
+          setTimeout(() => playEffect('level-up'), 500); // 少し遅れてレベルアップ音
         } else { 
           setMessage(`${displayName} DEFEATED! +${earnedExp} EXP`); 
         }
+
+        // ユーザー情報の更新
         const updatedUser = { ...currentUser, level: newLevel, exp: finalExp };
         updateCurrentUserAndList(updatedUser);
-        checkNewTitles(updatedUser, [newLog, ...questLogs], (title) => setMessage(`NEW TITLE UNLOCKED: ${title}!`));
+        
+        // 新しい称号がアンロックされたかチェック
+        checkNewTitles(updatedUser, [newLog, ...questLogs], (title) => 
+          setMessage(`NEW TITLE UNLOCKED: ${title}!`)
+        );
       } else {
+        // 未ログインの場合のメッセージ
         setMessage(`${displayName} CLEAR! +${earnedExp} EXP (Sign in to save)`);
       }
     } else {
+      // 休憩完了時
       setMessage("REST COMPLETE!");
     }
+    
+    // 5秒後にメッセージを消す
     setTimeout(() => setMessage(""), 5000);
   }, [currentUser, playEffect, addQuestLog, updateCurrentUserAndList, checkNewTitles, questLogs]);
 
+  // タイマーのロジックを管理するカスタムフック
   const timer = useTimer({ onComplete: handleComplete });
 
+  // テーマカラーの適用（CSS変数を書き換える）
   useEffect(() => { 
-    document.documentElement.setAttribute('data-theme', timer.isBossMode && timer.isActive ? 'ruby' : currentTheme); 
+    // ボス戦中かつタイマー動作中なら強制的に赤色テーマにする
+    const themeToApply = timer.isBossMode && timer.isActive ? 'ruby' : currentTheme;
+    document.documentElement.setAttribute('data-theme', themeToApply); 
   }, [currentTheme, timer.isBossMode, timer.isActive]);
 
+  /**
+   * 時間を MM:SS 形式に変換する
+   */
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  /**
+   * ログイン/登録ボタンが押された時の処理
+   */
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
     if (!authForm.username.trim()) return setAuthError("Enter name.");
 
+    // フック経由でログイン/登録を実行
     const result = isAuthMode === 'register' ? register(authForm.username) : login(authForm.username);
     
-    if (result.success) setIsAuthMode('none');
-    else if (result.error) setAuthError(result.error);
+    if (result.success) {
+      setIsAuthMode('none'); // 成功したら画面を閉じる
+    } else if (result.error) {
+      setAuthError(result.error); // 失敗したらエラー表示
+    }
     
     setAuthForm({ username: '' });
   };
 
+  // 表示用のフィルタリングされたデータ
   const userLogs = currentUser ? questLogs.filter(log => log.userId === currentUser.id) : questLogs.filter(log => log.userId === 'guest');
-  const currentTitle = titles.find(t => t.id === currentUser?.currentTitleId)?.name;
+  const currentTitleName = titles.find(t => t.id === currentUser?.currentTitleId)?.name;
 
   return (
     <div className={`min-h-screen transition-colors duration-1000 flex flex-col items-center justify-center font-mono p-4 md:p-8 selection:bg-primary/30 overflow-x-hidden ${timer.isBossMode && timer.isActive ? 'bg-red-950/20' : 'bg-background'}`}>
       
+      {/* 右側の操作パネル */}
       <Sidebar 
         currentUser={currentUser} currentTheme={currentTheme} duration={timer.duration} isActive={timer.isActive} isSoundOn={isSoundOn}
         onLogout={() => { playEffect('click'); logout(); timer.setIsActive(false); }}
@@ -107,8 +161,10 @@ export default function PomodoroQuest() {
         onToggleSound={toggleSound}
       />
 
+      {/* 履歴パネル（開いている時のみ表示） */}
       {isLogsOpen && <QuestLogPanel logs={userLogs} onClose={() => { playEffect('click'); setIsLogsOpen(false); }} />}
       
+      {/* プロフィールパネル（開いている時のみ表示） */}
       {isProfileOpen && currentUser && (
         <ProfilePanel 
           user={currentUser} 
@@ -119,10 +175,12 @@ export default function PomodoroQuest() {
 
       <div className="w-full max-w-md flex flex-col items-center gap-10 md:gap-14 my-8">
         
+        {/* 上部のステータスバー */}
         <div className="w-full cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]" onClick={() => { if(currentUser) { playEffect('click'); setIsProfileOpen(true); } }}>
-          <HUD user={currentUser} currentTitle={currentTitle} />
+          <HUD user={currentUser} currentTitle={currentTitleName} />
         </div>
 
+        {/* 認証オーバーレイ、またはタイマーUI */}
         {isAuthMode !== 'none' ? (
           <AuthOverlay 
             isAuthMode={isAuthMode as 'login' | 'register'} authForm={authForm} authError={authError}
@@ -132,6 +190,7 @@ export default function PomodoroQuest() {
           />
         ) : (
           <div className="flex flex-col items-center gap-8 w-full">
+            {/* モード選択と設定 */}
             <div className="w-full flex flex-col gap-4">
               {!timer.isActive && (
                 <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-500">
@@ -144,7 +203,9 @@ export default function PomodoroQuest() {
                   )}
                 </div>
               )}
+              {/* クエスト名入力 */}
               {!timer.isActive && timer.mode === 'quest' && <input type="text" placeholder={timer.isBossMode ? "Enter Boss Name..." : "Enter Quest Name..."} value={timer.questName} onChange={(e) => timer.setQuestName(e.target.value)} className={`w-full bg-foreground/5 border-2 rounded-2xl px-6 py-3 focus:outline-none transition-all font-bold text-center placeholder:opacity-30 ${timer.isBossMode ? 'border-red-500/50 focus:border-red-500' : 'border-primary/20 focus:border-primary/50'}`} />}
+              {/* 休憩時間選択 */}
               {!timer.isActive && timer.mode === 'rest' && (
                 <div className="flex justify-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
                   <button onClick={() => { playEffect('click'); timer.setTimeLeft(5*60); }} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${timer.timeLeft === 5*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}>Short (5m)</button>
@@ -152,10 +213,18 @@ export default function PomodoroQuest() {
                 </div>
               )}
             </div>
+
+            {/* ボス戦中の警告表示 */}
             {timer.isBossMode && timer.isActive && <div className="flex items-center gap-2 text-red-500 animate-bounce"><Flame className="w-4 h-4 fill-current" /><span className="text-[10px] font-black uppercase tracking-[0.3em]">Extreme Concentration Required</span><Flame className="w-4 h-4 fill-current" /></div>}
+            
+            {/* メインのタイマー表示 */}
             <TimerDisplay timeLeft={timer.timeLeft} duration={timer.mode === 'quest' ? timer.duration : (timer.timeLeft > 5*60 ? 15 : 5)} isActive={timer.isActive} message={message} formatTime={formatTime} questName={timer.isBossMode ? `BOSS: ${timer.questName || "ANCIENT EVIL"}` : (timer.mode === 'rest' ? "Resting at Inn" : timer.questName)} />
+            
+            {/* タイマー操作ボタン */}
             <div className="flex gap-8 md:gap-10">
+              {/* 開始 / 一時停止 */}
               <button onClick={() => { if (!timer.isActive && timer.isBossMode) playEffect('boss'); timer.toggleTimer(); }} disabled={timer.isActive && timer.isBossMode} className={`group relative w-20 h-20 md:w-24 md:h-24 rounded-[2.5rem] transition-all duration-300 transform active:scale-90 flex items-center justify-center border-b-4 ${timer.isActive ? (timer.isBossMode ? 'bg-red-900/40 border-red-950 opacity-50 cursor-not-allowed' : 'bg-foreground/10 border-foreground/20') : (timer.isBossMode ? 'bg-red-600 border-red-800 text-white shadow-[0_0_30px_rgba(220,38,38,0.4)]' : 'bg-primary border-primary/50 text-primary-foreground')}`}>{timer.isActive ? <Pause className="w-8 h-8 md:w-10 md:h-10" /> : <Play className="w-8 h-8 md:w-10 md:h-10 ml-1" />}<div className={`absolute -inset-2 blur-2xl opacity-0 group-hover:opacity-20 transition-opacity rounded-full ${timer.isActive ? 'bg-foreground' : (timer.isBossMode ? 'bg-red-500' : 'bg-primary')}`} /></button>
+              {/* リセット / 逃走 */}
               <button onClick={() => {
                 if (timer.isActive && timer.isBossMode && currentUser) {
                   const penalty = 50;
@@ -169,6 +238,8 @@ export default function PomodoroQuest() {
             </div>
           </div>
         )}
+
+        {/* 装飾用アイコン */}
         <div className="flex gap-12 opacity-30 mt-8">
           <Trophy className="w-6 h-6 text-primary" /><Crown className="w-6 h-6 text-primary" /><Zap className="w-6 h-6 text-primary" />
         </div>

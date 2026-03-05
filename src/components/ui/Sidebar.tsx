@@ -1,24 +1,33 @@
 "use client";
 
 import React from 'react';
+// Lucide React からアイコンをインポート
 import { Moon, Sun, LogIn, LogOut, ScrollText, Volume2, VolumeX } from 'lucide-react';
+// 型定義と定数をインポート
 import { ThemeCategory, User } from '@/types';
 import { themes, durationOptions } from '@/constants';
 
+/**
+ * サイドバーコンポーネントのプロパティ（受け取るデータ）の定義
+ */
 type SidebarProps = {
-  currentUser: User | null;
-  currentTheme: string;
-  duration: number;
-  isActive: boolean;
-  isSoundOn: boolean;
-  onLogout: () => void;
-  onOpenAuth: () => void;
-  onThemeChange: (theme: string) => void;
-  onDurationSelect: (mins: number) => void;
-  onOpenLogs: () => void;
-  onToggleSound: () => void;
+  currentUser: User | null; // ログイン中のユーザー情報
+  currentTheme: string;      // 現在選択されているテーマ
+  duration: number;          // 現在設定されているクエスト時間
+  isActive: boolean;         // タイマーが動いているか
+  isSoundOn: boolean;        // サウンドが有効か
+  onLogout: () => void;      // ログアウト処理
+  onOpenAuth: () => void;    // 認証画面を開く処理
+  onThemeChange: (theme: string) => void; // テーマ変更処理
+  onDurationSelect: (mins: number) => void; // クエスト時間選択処理
+  onOpenLogs: () => void;    // 履歴画面を開く処理
+  onToggleSound: () => void; // サウンド切り替え処理
 };
 
+/**
+ * 画面右側に固定表示される操作パネル
+ * テーマ選択、クエスト時間設定、ログイン管理、サウンド設定を集約しています。
+ */
 export function Sidebar({ 
   currentUser, currentTheme, duration, isActive, isSoundOn,
   onLogout, onOpenAuth, onThemeChange, onDurationSelect, onOpenLogs, onToggleSound
@@ -26,9 +35,10 @@ export function Sidebar({
   return (
     <div className="fixed top-4 right-4 md:top-8 md:right-8 flex flex-col items-end gap-6 z-50 max-h-[90vh] overflow-y-auto pr-1 scrollbar-hide">
       
-      {/* Top Buttons */}
+      {/* ログイン・履歴・サウンド設定のトップボタン群 */}
       <div className="flex flex-col items-end gap-2">
         <div className="flex gap-2">
+          {/* サウンドON/OFF切り替えボタン */}
           <button 
             onClick={onToggleSound}
             className="p-2 bg-foreground/5 border border-primary/20 rounded-xl hover:bg-foreground/10 transition-all"
@@ -36,6 +46,7 @@ export function Sidebar({
           >
             {isSoundOn ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4 opacity-40" />}
           </button>
+          {/* 冒険の記録（履歴）を開くボタン */}
           <button 
             onClick={onOpenLogs}
             className="flex items-center gap-2 px-4 py-2 bg-foreground/5 border border-primary/20 rounded-xl hover:bg-foreground/10 transition-all text-[10px] font-black uppercase tracking-widest"
@@ -45,6 +56,7 @@ export function Sidebar({
           </button>
         </div>
 
+        {/* ユーザーの状態（ログイン/ログアウト）に応じたボタンの表示 */}
         {currentUser ? (
           <button onClick={onLogout} className="flex items-center gap-2 px-4 py-2 bg-foreground/5 border border-primary/20 rounded-xl hover:bg-foreground/10 transition-all text-[10px] font-black uppercase tracking-widest">
             <LogOut className="w-3 h-3" /> Sign Out
@@ -56,14 +68,16 @@ export function Sidebar({
         )}
       </div>
 
-      {/* テーマセレクター */}
+      {/* テーマセレクター（Shadow / Radiance） */}
       <div className="flex flex-col items-end gap-3">
         {(['dark', 'light'] as ThemeCategory[]).map((cat) => (
           <div key={cat} className="flex flex-col items-end gap-2">
+            {/* カテゴリラベル（月/太陽アイコン） */}
             <div className={`flex items-center gap-2 px-3 py-1 border border-primary/20 rounded-full backdrop-blur-md ${cat === 'dark' ? 'bg-slate-900/40' : 'bg-white/40'}`}>
               {cat === 'dark' ? <Moon className="w-3 h-3 text-primary" /> : <Sun className="w-3 h-3 text-primary" />}
               <span className="text-[9px] font-black uppercase tracking-widest text-primary/80">{cat === 'dark' ? 'Shadow' : 'Radiance'}</span>
             </div>
+            {/* 各色のテーマボタン */}
             <div className={`flex gap-1.5 p-1.5 border border-primary/20 rounded-xl backdrop-blur-md shadow-xl ${cat === 'dark' ? 'bg-slate-900/40' : 'bg-white/40'}`}>
               {themes[cat].map((theme) => (
                 <button
@@ -80,10 +94,10 @@ export function Sidebar({
         ))}
       </div>
 
-      {/* クエスト時間セレクター */}
+      {/* クエスト時間セレクター（5分〜60分のグリッド） */}
       <div className="flex flex-col items-end gap-2">
         <div className="flex items-center gap-2 px-3 py-1 bg-background/40 border border-primary/20 rounded-full backdrop-blur-md">
-          <Volume2 className="w-3 h-3 text-primary" />
+          <ScrollText className="w-3 h-3 text-primary" />
           <span className="text-[9px] font-black uppercase tracking-widest text-primary/80">Quest</span>
         </div>
         <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-background/40 border border-primary/20 rounded-xl backdrop-blur-md shadow-xl w-fit">
