@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Pause, RotateCcw, Trophy, Crown, Zap, Coffee, Skull, Flame } from 'lucide-react';
 import { User, QuestLog } from '@/types';
 import { titles } from '@/constants';
@@ -12,6 +12,9 @@ import { QuestLogPanel } from '@/components/ui/QuestLogPanel';
 import { ProfilePanel } from '@/components/ui/ProfilePanel';
 
 export default function PomodoroQuest() {
+  // --- Audio Context Ref ---
+  const audioCtx = useRef<AudioContext | null>(null);
+
   // --- Timer State ---
   const [questName, setQuestName] = useState("");
   const [duration, setDuration] = useState(25);
@@ -33,7 +36,7 @@ export default function PomodoroQuest() {
   const [authForm, setAuthForm] = useState({ username: '' });
   const [authError, setAuthError] = useState("");
 
-  // 初期化 (Hydration Error & Lint Error回避のため)
+  // 初期化
   useEffect(() => {
     const init = () => {
       const savedUsers = localStorage.getItem('pq_users');
@@ -49,8 +52,6 @@ export default function PomodoroQuest() {
       const savedSound = localStorage.getItem('pq_sound');
       if (savedSound !== null) setIsSoundOn(JSON.parse(savedSound));
     };
-    
-    // setTimeoutを使用して同期的実行を避ける
     const timer = setTimeout(init, 0);
     return () => clearTimeout(timer);
   }, []);
@@ -61,7 +62,7 @@ export default function PomodoroQuest() {
     if (currentUser) localStorage.setItem('pq_current_user', JSON.stringify(currentUser));
     else if (users.length > 0) localStorage.removeItem('pq_current_user');
   }, [currentUser, users.length]);
-  useEffect(() => { if (questLogs.length > 0) localStorage.setItem('pq_logs', JSON.stringify(questLogs)); }, [questLogs]);
+  useEffect(() => { localStorage.setItem('pq_logs', JSON.stringify(questLogs)); }, [questLogs]);
   useEffect(() => { localStorage.setItem('pq_sound', JSON.stringify(isSoundOn)); }, [isSoundOn]);
 
   const updateCurrentUserAndList = useCallback((updatedUser: User) => {
@@ -86,9 +87,68 @@ export default function PomodoroQuest() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // サウンド再生関数 (Web Audio API)
   const playEffect = useCallback((type: 'click' | 'complete' | 'level-up' | 'boss') => {
     if (!isSoundOn) return;
-    console.log(`[Sound Effect]: ${type}`);
+
+    if (!audioCtx.current) {
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx.current = new AudioContextClass();
+      }
+    }
+
+    const ctx = audioCtx.current;
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+
+    switch (type) {
+      case 'click':
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.1);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+        break;
+      case 'complete':
+        osc.type = 'square';
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          osc.frequency.setValueAtTime(freq, now + i * 0.1);
+        });
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+        break;
+      case 'level-up':
+        osc.type = 'sawtooth';
+        for (let i = 0; i < 8; i++) {
+          osc.frequency.setValueAtTime(523.25 * Math.pow(1.06, i * 2), now + i * 0.05);
+        }
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+        osc.start(now);
+        osc.stop(now + 0.8);
+        break;
+      case 'boss':
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(110, now);
+        osc.frequency.exponentialRampToValueAtTime(55, now + 0.5);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+        break;
+    }
   }, [isSoundOn]);
 
   const handleTimerComplete = useCallback(() => {
@@ -111,7 +171,7 @@ export default function PomodoroQuest() {
         if (newExp >= 1000) { 
           newLevel += 1; finalExp = newExp - 1000; 
           setMessage(`LEVEL UP! ${displayName} DEFEATED! +${earnedExp} EXP`); 
-          playEffect('level-up');
+          setTimeout(() => playEffect('level-up'), 500);
         } else { 
           setMessage(`${displayName} DEFEATED! +${earnedExp} EXP`); 
         }
@@ -142,7 +202,9 @@ export default function PomodoroQuest() {
   const toggleTimer = () => {
     playEffect('click');
     setIsActive(!isActive);
-    if (!isActive && isBossMode) playEffect('boss');
+    if (!isActive && isBossMode) {
+      setTimeout(() => playEffect('boss'), 100);
+    }
   };
   
   const resetTimer = () => { 
@@ -201,27 +263,49 @@ export default function PomodoroQuest() {
       
       <Sidebar 
         currentUser={currentUser} currentTheme={currentTheme} duration={duration} isActive={isActive} isSoundOn={isSoundOn}
-        onLogout={() => { setCurrentUser(null); setIsActive(false); }}
-        onOpenAuth={() => setIsAuthMode('login')}
-        onThemeChange={setCurrentTheme}
-        onDurationSelect={(mins) => { setDuration(mins); if (mode === 'quest') setTimeLeft(mins * 60); }}
-        onOpenLogs={() => setIsLogsOpen(true)}
-        onToggleSound={() => setIsSoundOn(!isSoundOn)}
+        onLogout={() => { playEffect('click'); setCurrentUser(null); setIsActive(false); }}
+        onOpenAuth={() => { playEffect('click'); setIsAuthMode('login'); }}
+        onThemeChange={(theme) => { playEffect('click'); setCurrentTheme(theme); }}
+        onDurationSelect={(mins) => { 
+          playEffect('click'); 
+          setDuration(mins); 
+          if (mode === 'quest') setTimeLeft(mins * 60); 
+        }}
+        onOpenLogs={() => { playEffect('click'); setIsLogsOpen(true); }}
+        onToggleSound={() => {
+          const next = !isSoundOn;
+          setIsSoundOn(next);
+          if (next) {
+            setTimeout(() => {
+              const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+              if (!audioCtx.current && AudioContextClass) audioCtx.current = new AudioContextClass();
+              if (audioCtx.current) {
+                const osc = audioCtx.current.createOscillator();
+                const g = audioCtx.current.createGain();
+                osc.connect(g); g.connect(audioCtx.current.destination);
+                osc.frequency.setValueAtTime(440, audioCtx.current.currentTime);
+                g.gain.setValueAtTime(0.05, audioCtx.current.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, audioCtx.current.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.current.currentTime + 0.1);
+              }
+            }, 50);
+          }
+        }}
       />
 
-      {isLogsOpen && <QuestLogPanel logs={userLogs} onClose={() => setIsLogsOpen(false)} />}
+      {isLogsOpen && <QuestLogPanel logs={userLogs} onClose={() => { playEffect('click'); setIsLogsOpen(false); }} />}
       
       {isProfileOpen && currentUser && (
         <ProfilePanel 
           user={currentUser} 
-          onClose={() => setIsProfileOpen(false)} 
-          onEquipTitle={(id) => updateCurrentUserAndList({ ...currentUser, currentTitleId: id })}
+          onClose={() => { playEffect('click'); setIsProfileOpen(false); }} 
+          onEquipTitle={(id) => { playEffect('click'); updateCurrentUserAndList({ ...currentUser, currentTitleId: id }); }}
         />
       )}
 
       <div className="w-full max-w-md flex flex-col items-center gap-10 md:gap-14 my-8">
         
-        <div className="w-full cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]" onClick={() => currentUser && setIsProfileOpen(true)}>
+        <div className="w-full cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]" onClick={() => { if(currentUser) { playEffect('click'); setIsProfileOpen(true); } }}>
           <HUD user={currentUser} currentTitle={currentTitle} />
         </div>
 
@@ -229,8 +313,8 @@ export default function PomodoroQuest() {
           <AuthOverlay 
             isAuthMode={isAuthMode as 'login' | 'register'} authForm={authForm} authError={authError}
             onFormChange={(username) => setAuthForm({ username })} onSubmit={(e) => { playEffect('click'); handleAuthSubmit(e); }}
-            onToggleMode={() => setIsAuthMode(isAuthMode === 'login' ? 'register' : 'login')}
-            onCancel={() => setIsAuthMode('none')}
+            onToggleMode={() => { playEffect('click'); setIsAuthMode(isAuthMode === 'login' ? 'register' : 'login'); }}
+            onCancel={() => { playEffect('click'); setIsAuthMode('none'); }}
           />
         ) : (
           <div className="flex flex-col items-center gap-8 w-full">
