@@ -1,17 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Trophy, Crown, Zap } from 'lucide-react';
+import { Play, Pause, RotateCcw, Trophy, Crown, Zap, Coffee, Tent } from 'lucide-react';
 import { User } from '@/types';
 import { HUD } from '@/components/ui/HUD';
 import { Sidebar } from '@/components/ui/Sidebar';
 import { AuthOverlay } from '@/components/ui/AuthOverlay';
 import { TimerDisplay } from '@/components/ui/TimerDisplay';
-
-// --- In-Memory Mock Database ---
-const mockUsers: User[] = [
-  { id: '1', username: 'Hero', level: 1, exp: 0 }
-];
 
 export default function PomodoroQuest() {
   // --- Auth & Persistence State ---
@@ -46,7 +41,6 @@ export default function PomodoroQuest() {
     }
   }, [currentUser]);
 
-  // currentUserの変更をusersリストに反映する関数（handleQuestCompleteなどで呼び出す）
   const updateCurrentUserAndList = useCallback((updatedUser: User) => {
     setCurrentUser(updatedUser);
     setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
@@ -57,6 +51,7 @@ export default function PomodoroQuest() {
   const [duration, setDuration] = useState(25);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
+  const [mode, setMode] = useState<'quest' | 'rest'>('quest');
   const [message, setMessage] = useState("");
   const [currentTheme, setCurrentTheme] = useState('emerald');
 
@@ -71,33 +66,40 @@ export default function PomodoroQuest() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleQuestComplete = useCallback(() => {
+  const handleTimerComplete = useCallback(() => {
     setIsActive(false);
-    setTimeLeft(duration * 60);
+    
+    if (mode === 'quest') {
+      const earnedExp = duration * 10;
+      const displayName = questName || "Quest";
 
-    const earnedExp = duration * 10;
-    const displayName = questName || "Quest";
+      if (currentUser) {
+        const newExp = currentUser.exp + earnedExp;
+        let newLevel = currentUser.level;
+        let finalExp = newExp;
 
-    if (currentUser) {
-      const newExp = currentUser.exp + earnedExp;
-      let newLevel = currentUser.level;
-      let finalExp = newExp;
-
-      if (newExp >= 1000) {
-        newLevel += 1;
-        finalExp = newExp - 1000;
-        setMessage(`LEVEL UP! ${displayName} CLEAR! +${earnedExp} EXP`);
+        if (newExp >= 1000) {
+          newLevel += 1;
+          finalExp = newExp - 1000;
+          setMessage(`LEVEL UP! ${displayName} CLEAR! +${earnedExp} EXP`);
+        } else {
+          setMessage(`${displayName} CLEAR! +${earnedExp} EXP`);
+        }
+        updateCurrentUserAndList({ ...currentUser, level: newLevel, exp: finalExp });
       } else {
-        setMessage(`${displayName} CLEAR! +${earnedExp} EXP`);
+        setMessage(`${displayName} CLEAR! +${earnedExp} EXP (Sign in to save)`);
       }
-
-      updateCurrentUserAndList({ ...currentUser, level: newLevel, exp: finalExp });
+      // クエスト完了後は自動的に休息の準備へ（時間はまだセットしない）
+      setMode('rest');
+      setTimeLeft(5 * 60); // デフォルト5分
     } else {
-      setMessage(`${displayName} CLEAR! +${earnedExp} EXP (Sign in to save)`);
+      setMessage("REST COMPLETE! Ready for the next quest?");
+      setMode('quest');
+      setTimeLeft(duration * 60);
     }
     
     setTimeout(() => setMessage(""), 5000);
-  }, [duration, currentUser, updateCurrentUserAndList, questName]);
+  }, [duration, currentUser, updateCurrentUserAndList, questName, mode]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -105,49 +107,48 @@ export default function PomodoroQuest() {
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
     } else if (timeLeft === 0 && isActive) {
-      timeoutId = setTimeout(handleQuestComplete, 0);
+      timeoutId = setTimeout(handleTimerComplete, 0);
     }
     return () => {
       if (interval) clearInterval(interval);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [isActive, timeLeft, handleQuestComplete]);
+  }, [isActive, timeLeft, handleTimerComplete]);
 
   const toggleTimer = () => setIsActive(!isActive);
   const resetTimer = () => {
     setIsActive(false);
-    setTimeLeft(duration * 60);
+    setTimeLeft(mode === 'quest' ? duration * 60 : 5 * 60);
     setMessage("");
   };
 
-  const selectDuration = (mins: number) => {
-    if (isActive) return;
-    setDuration(mins);
+  const startRest = (mins: number) => {
+    setIsActive(false);
+    setMode('rest');
     setTimeLeft(mins * 60);
+  };
+
+  const startQuest = () => {
+    setIsActive(false);
+    setMode('quest');
+    setTimeLeft(duration * 60);
   };
 
   // --- Auth Handlers ---
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
-
     if (!authForm.username.trim()) {
       setAuthError("Enter your adventurer name.");
       return;
     }
-
     if (isAuthMode === 'register') {
       const exists = users.find(u => u.username === authForm.username);
       if (exists) {
         setAuthError("Name already taken.");
         return;
       }
-      const newUser: User = {
-        id: Date.now().toString(),
-        username: authForm.username,
-        level: 1,
-        exp: 0
-      };
+      const newUser: User = { id: Date.now().toString(), username: authForm.username, level: 1, exp: 0 };
       setUsers(prev => [...prev, newUser]);
       setCurrentUser(newUser);
       setIsAuthMode('none');
@@ -179,7 +180,10 @@ export default function PomodoroQuest() {
         onLogout={logout}
         onOpenAuth={() => setIsAuthMode('login')}
         onThemeChange={setCurrentTheme}
-        onDurationSelect={selectDuration}
+        onDurationSelect={(mins) => {
+          setDuration(mins);
+          if (mode === 'quest') setTimeLeft(mins * 60);
+        }}
       />
 
       <div className="w-full max-w-md flex flex-col items-center gap-10 md:gap-14 my-8">
@@ -198,26 +202,63 @@ export default function PomodoroQuest() {
           />
         ) : (
           <div className="flex flex-col items-center gap-8 w-full">
-            {/* クエスト名入力 */}
-            {!isActive && (
-              <div className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
-                <input 
-                  type="text"
-                  placeholder="Enter Quest Name..."
-                  value={questName}
-                  onChange={(e) => setQuestName(e.target.value)}
-                  className="w-full bg-foreground/5 border-2 border-primary/20 rounded-2xl px-6 py-3 focus:border-primary/50 focus:outline-none transition-all font-bold text-center placeholder:opacity-30"
-                />
-              </div>
-            )}
+            
+            {/* モード切り替え & 入力 */}
+            <div className="w-full flex flex-col gap-4">
+              {!isActive && (
+                <div className="flex justify-center gap-4 animate-in fade-in zoom-in duration-500">
+                  <button 
+                    onClick={startQuest}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${mode === 'quest' ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 opacity-40 hover:opacity-100'}`}
+                  >
+                    <Zap className="w-3 h-3" /> Quest
+                  </button>
+                  <button 
+                    onClick={() => startRest(5)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${mode === 'rest' ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 opacity-40 hover:opacity-100'}`}
+                  >
+                    <Coffee className="w-3 h-3" /> Rest
+                  </button>
+                </div>
+              )}
+
+              {!isActive && mode === 'quest' && (
+                <div className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
+                  <input 
+                    type="text"
+                    placeholder="Enter Quest Name..."
+                    value={questName}
+                    onChange={(e) => setQuestName(e.target.value)}
+                    className="w-full bg-foreground/5 border-2 border-primary/20 rounded-2xl px-6 py-3 focus:border-primary/50 focus:outline-none transition-all font-bold text-center placeholder:opacity-30"
+                  />
+                </div>
+              )}
+
+              {!isActive && mode === 'rest' && (
+                <div className="flex justify-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <button 
+                    onClick={() => startRest(5)}
+                    className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all ${timeLeft === 5*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}
+                  >
+                    Short Rest (5m)
+                  </button>
+                  <button 
+                    onClick={() => startRest(15)}
+                    className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all ${timeLeft === 15*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}
+                  >
+                    Long Rest (15m)
+                  </button>
+                </div>
+              )}
+            </div>
 
             <TimerDisplay 
               timeLeft={timeLeft}
-              duration={duration}
+              duration={mode === 'quest' ? duration : (timeLeft > 5*60 ? 15 : 5)}
               isActive={isActive}
               message={message}
               formatTime={formatTime}
-              questName={questName}
+              questName={mode === 'rest' ? "Resting at Inn" : questName}
             />
 
             <div className="flex gap-8 md:gap-10">
