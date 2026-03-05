@@ -3,6 +3,15 @@ export type User = {
   username: string;
   level: number;
   exp: number;
+  unlockedTitles: string[]; // 称号のIDリスト
+  currentTitleId?: string;  // 現在セットしている称号
+};
+
+export type Title = {
+  id: string;
+  name: string;
+  description: string;
+  condition: (user: User, logs: QuestLog[]) => boolean;
 };
 
 export type QuestLog = {

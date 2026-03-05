@@ -1,14 +1,15 @@
 "use client";
 
 import React from 'react';
-import { Shield } from 'lucide-react';
+import { Shield, Crown } from 'lucide-react';
 import { User } from '@/types';
 
 type HUDProps = {
   user: User | null;
+  currentTitle?: string;
 };
 
-export function HUD({ user }: HUDProps) {
+export function HUD({ user, currentTitle }: HUDProps) {
   const level = user ? user.level : 1;
   const exp = user ? user.exp : 0;
   const username = user ? user.username : "Guest Hero";
@@ -21,7 +22,14 @@ export function HUD({ user }: HUDProps) {
             <Shield className="text-primary w-6 h-6" />
           </div>
           <div>
-            <div className="text-[10px] opacity-50 font-black uppercase tracking-[0.2em] leading-none mb-1">Adventurer</div>
+            <div className="flex items-center gap-1.5 mb-1">
+              <div className="text-[10px] opacity-50 font-black uppercase tracking-[0.2em] leading-none">Adventurer</div>
+              {currentTitle && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/20 border border-primary/30 rounded-md text-[8px] font-black text-primary uppercase tracking-widest">
+                  <Crown className="w-2 h-2" /> {currentTitle}
+                </div>
+              )}
+            </div>
             <div className="text-2xl font-black italic text-primary leading-none">
               {username}
             </div>
