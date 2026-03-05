@@ -8,17 +8,44 @@ import { Sidebar } from '@/components/ui/Sidebar';
 import { AuthOverlay } from '@/components/ui/AuthOverlay';
 import { TimerDisplay } from '@/components/ui/TimerDisplay';
 
-// --- In-Memory Mock Database ---
-const mockUsers: User[] = [
-  { id: '1', username: 'Hero', level: 1, exp: 0 }
-];
-
 export default function PomodoroQuest() {
-  // --- Auth State ---
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  // --- Auth & Persistence State ---
+  const [users, setUsers] = useState<User[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('pq_users');
+    if (saved) return JSON.parse(saved);
+    return [{ id: '1', username: 'Hero', level: 1, exp: 0 }];
+  });
+
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const saved = localStorage.getItem('pq_current_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
   const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none');
   const [authForm, setAuthForm] = useState({ username: '' });
   const [authError, setAuthError] = useState("");
+
+  // ユーザーデータが更新されたら保存
+  useEffect(() => {
+    localStorage.setItem('pq_users', JSON.stringify(users));
+  }, [users]);
+
+  // セッションが更新されたら保存
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('pq_current_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('pq_current_user');
+    }
+  }, [currentUser]);
+
+  // currentUserの変更をusersリストに反映する関数（handleQuestCompleteなどで呼び出す）
+  const updateCurrentUserAndList = useCallback((updatedUser: User) => {
+    setCurrentUser(updatedUser);
+    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+  }, []);
 
   // --- Timer State ---
   const [duration, setDuration] = useState(25);
@@ -57,13 +84,13 @@ export default function PomodoroQuest() {
         setMessage(`QUEST CLEAR! +${earnedExp} EXP`);
       }
 
-      setCurrentUser({ ...currentUser, level: newLevel, exp: finalExp });
+      updateCurrentUserAndList({ ...currentUser, level: newLevel, exp: finalExp });
     } else {
       setMessage(`QUEST CLEAR! +${earnedExp} EXP (Sign in to save)`);
     }
     
     setTimeout(() => setMessage(""), 5000);
-  }, [duration, currentUser]);
+  }, [duration, currentUser, updateCurrentUserAndList]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -103,7 +130,7 @@ export default function PomodoroQuest() {
     }
 
     if (isAuthMode === 'register') {
-      const exists = mockUsers.find(u => u.username === authForm.username);
+      const exists = users.find(u => u.username === authForm.username);
       if (exists) {
         setAuthError("Name already taken.");
         return;
@@ -114,11 +141,11 @@ export default function PomodoroQuest() {
         level: 1,
         exp: 0
       };
-      mockUsers.push(newUser);
+      setUsers(prev => [...prev, newUser]);
       setCurrentUser(newUser);
       setIsAuthMode('none');
     } else {
-      const user = mockUsers.find(u => u.username === authForm.username);
+      const user = users.find(u => u.username === authForm.username);
       if (!user) {
         setAuthError("Adventurer not found.");
         return;
