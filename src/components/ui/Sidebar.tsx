@@ -1,8 +1,8 @@
 "use client";
 
 import React from 'react';
-import { Moon, Sun, Timer, LogIn, LogOut } from 'lucide-react';
-import { Theme, ThemeCategory, User } from '@/types';
+import { Moon, Sun, Timer, LogIn, LogOut, ScrollText } from 'lucide-react';
+import { ThemeCategory, User } from '@/types';
 import { themes, durationOptions } from '@/constants';
 
 type SidebarProps = {
@@ -14,6 +14,7 @@ type SidebarProps = {
   onOpenAuth: () => void;
   onThemeChange: (theme: string) => void;
   onDurationSelect: (mins: number) => void;
+  onOpenLogs: () => void;
 };
 
 export function Sidebar({ 
@@ -24,13 +25,22 @@ export function Sidebar({
   onLogout, 
   onOpenAuth, 
   onThemeChange, 
-  onDurationSelect 
+  onDurationSelect,
+  onOpenLogs
 }: SidebarProps) {
   return (
     <div className="fixed top-4 right-4 md:top-8 md:right-8 flex flex-col items-end gap-6 z-50 max-h-[90vh] overflow-y-auto pr-1 scrollbar-hide">
       
-      {/* Auth Button */}
+      {/* Top Buttons */}
       <div className="flex flex-col items-end gap-2">
+        <button 
+          onClick={onOpenLogs}
+          className="flex items-center gap-2 px-4 py-2 bg-foreground/5 border border-primary/20 rounded-xl hover:bg-foreground/10 transition-all text-[10px] font-black uppercase tracking-widest"
+        >
+          <ScrollText className="w-3 h-3" />
+          Adventure Log
+        </button>
+
         {currentUser ? (
           <button 
             onClick={onLogout}

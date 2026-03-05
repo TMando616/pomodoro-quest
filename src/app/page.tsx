@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Trophy, Crown, Zap, Coffee, Tent } from 'lucide-react';
-import { User } from '@/types';
+import { Play, Pause, RotateCcw, Trophy, Crown, Zap, Coffee } from 'lucide-react';
+import { User, QuestLog } from '@/types';
 import { HUD } from '@/components/ui/HUD';
 import { Sidebar } from '@/components/ui/Sidebar';
 import { AuthOverlay } from '@/components/ui/AuthOverlay';
 import { TimerDisplay } from '@/components/ui/TimerDisplay';
+import { QuestLogPanel } from '@/components/ui/QuestLogPanel';
 
 export default function PomodoroQuest() {
   // --- Auth & Persistence State ---
@@ -23,16 +24,22 @@ export default function PomodoroQuest() {
     return saved ? JSON.parse(saved) : null;
   });
 
+  const [questLogs, setQuestLogs] = useState<QuestLog[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('pq_logs');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none');
+  const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [authForm, setAuthForm] = useState({ username: '' });
   const [authError, setAuthError] = useState("");
 
-  // ユーザーデータが更新されたら保存
+  // 永続化
   useEffect(() => {
     localStorage.setItem('pq_users', JSON.stringify(users));
   }, [users]);
 
-  // セッションが更新されたら保存
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('pq_current_user', JSON.stringify(currentUser));
@@ -40,6 +47,10 @@ export default function PomodoroQuest() {
       localStorage.removeItem('pq_current_user');
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    localStorage.setItem('pq_logs', JSON.stringify(questLogs));
+  }, [questLogs]);
 
   const updateCurrentUserAndList = useCallback((updatedUser: User) => {
     setCurrentUser(updatedUser);
@@ -55,7 +66,6 @@ export default function PomodoroQuest() {
   const [message, setMessage] = useState("");
   const [currentTheme, setCurrentTheme] = useState('emerald');
 
-  // テーマの適用
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', currentTheme);
   }, [currentTheme]);
@@ -73,6 +83,17 @@ export default function PomodoroQuest() {
       const earnedExp = duration * 10;
       const displayName = questName || "Quest";
 
+      // 履歴に追加
+      const newLog: QuestLog = {
+        id: Date.now().toString(),
+        userId: currentUser?.id || 'guest',
+        name: displayName,
+        duration: duration,
+        earnedExp: earnedExp,
+        createdAt: Date.now()
+      };
+      setQuestLogs(prev => [newLog, ...prev]);
+
       if (currentUser) {
         const newExp = currentUser.exp + earnedExp;
         let newLevel = currentUser.level;
@@ -89,9 +110,8 @@ export default function PomodoroQuest() {
       } else {
         setMessage(`${displayName} CLEAR! +${earnedExp} EXP (Sign in to save)`);
       }
-      // クエスト完了後は自動的に休息の準備へ（時間はまだセットしない）
       setMode('rest');
-      setTimeLeft(5 * 60); // デフォルト5分
+      setTimeLeft(5 * 60);
     } else {
       setMessage("REST COMPLETE! Ready for the next quest?");
       setMode('quest');
@@ -122,19 +142,7 @@ export default function PomodoroQuest() {
     setMessage("");
   };
 
-  const startRest = (mins: number) => {
-    setIsActive(false);
-    setMode('rest');
-    setTimeLeft(mins * 60);
-  };
-
-  const startQuest = () => {
-    setIsActive(false);
-    setMode('quest');
-    setTimeLeft(duration * 60);
-  };
-
-  // --- Auth Handlers ---
+  // Auth
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
@@ -169,6 +177,10 @@ export default function PomodoroQuest() {
     setIsActive(false);
   };
 
+  const userLogs = currentUser 
+    ? questLogs.filter(log => log.userId === currentUser.id)
+    : questLogs.filter(log => log.userId === 'guest');
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center font-mono p-4 md:p-8 selection:bg-primary/30 transition-colors duration-500 overflow-x-hidden">
       
@@ -184,7 +196,15 @@ export default function PomodoroQuest() {
           setDuration(mins);
           if (mode === 'quest') setTimeLeft(mins * 60);
         }}
+        onOpenLogs={() => setIsLogsOpen(true)}
       />
+
+      {isLogsOpen && (
+        <QuestLogPanel 
+          logs={userLogs}
+          onClose={() => setIsLogsOpen(false)}
+        />
+      )}
 
       <div className="w-full max-w-md flex flex-col items-center gap-10 md:gap-14 my-8">
         
@@ -202,19 +222,17 @@ export default function PomodoroQuest() {
           />
         ) : (
           <div className="flex flex-col items-center gap-8 w-full">
-            
-            {/* モード切り替え & 入力 */}
             <div className="w-full flex flex-col gap-4">
               {!isActive && (
                 <div className="flex justify-center gap-4 animate-in fade-in zoom-in duration-500">
                   <button 
-                    onClick={startQuest}
+                    onClick={() => { setMode('quest'); setTimeLeft(duration * 60); }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${mode === 'quest' ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 opacity-40 hover:opacity-100'}`}
                   >
                     <Zap className="w-3 h-3" /> Quest
                   </button>
                   <button 
-                    onClick={() => startRest(5)}
+                    onClick={() => { setMode('rest'); setTimeLeft(5 * 60); }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${mode === 'rest' ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 opacity-40 hover:opacity-100'}`}
                   >
                     <Coffee className="w-3 h-3" /> Rest
@@ -236,18 +254,8 @@ export default function PomodoroQuest() {
 
               {!isActive && mode === 'rest' && (
                 <div className="flex justify-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
-                  <button 
-                    onClick={() => startRest(5)}
-                    className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all ${timeLeft === 5*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}
-                  >
-                    Short Rest (5m)
-                  </button>
-                  <button 
-                    onClick={() => startRest(15)}
-                    className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all ${timeLeft === 15*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}
-                  >
-                    Long Rest (15m)
-                  </button>
+                  <button onClick={() => setTimeLeft(5*60)} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${timeLeft === 5*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}>Short (5m)</button>
+                  <button onClick={() => setTimeLeft(15*60)} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${timeLeft === 15*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}>Long (15m)</button>
                 </div>
               )}
             </div>
@@ -265,9 +273,7 @@ export default function PomodoroQuest() {
               <button
                 onClick={toggleTimer}
                 className={`group relative w-20 h-20 md:w-24 md:h-24 rounded-[2.5rem] transition-all duration-300 transform active:scale-90 flex items-center justify-center border-b-4 ${
-                  isActive 
-                    ? 'bg-foreground/10 border-foreground/20' 
-                    : 'bg-primary border-primary/50 text-primary-foreground'
+                  isActive ? 'bg-foreground/10 border-foreground/20' : 'bg-primary border-primary/50 text-primary-foreground'
                 }`}
               >
                 {isActive ? <Pause className="w-8 h-8 md:w-10 md:h-10" /> : <Play className="w-8 h-8 md:w-10 md:h-10 ml-1" />}
