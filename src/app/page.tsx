@@ -8,6 +8,11 @@ import { Sidebar } from '@/components/ui/Sidebar';
 import { AuthOverlay } from '@/components/ui/AuthOverlay';
 import { TimerDisplay } from '@/components/ui/TimerDisplay';
 
+// --- In-Memory Mock Database ---
+const mockUsers: User[] = [
+  { id: '1', username: 'Hero', level: 1, exp: 0 }
+];
+
 export default function PomodoroQuest() {
   // --- Auth & Persistence State ---
   const [users, setUsers] = useState<User[]>(() => {
@@ -48,6 +53,7 @@ export default function PomodoroQuest() {
   }, []);
 
   // --- Timer State ---
+  const [questName, setQuestName] = useState("");
   const [duration, setDuration] = useState(25);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
@@ -70,6 +76,7 @@ export default function PomodoroQuest() {
     setTimeLeft(duration * 60);
 
     const earnedExp = duration * 10;
+    const displayName = questName || "Quest";
 
     if (currentUser) {
       const newExp = currentUser.exp + earnedExp;
@@ -79,18 +86,18 @@ export default function PomodoroQuest() {
       if (newExp >= 1000) {
         newLevel += 1;
         finalExp = newExp - 1000;
-        setMessage(`LEVEL UP! QUEST CLEAR! +${earnedExp} EXP`);
+        setMessage(`LEVEL UP! ${displayName} CLEAR! +${earnedExp} EXP`);
       } else {
-        setMessage(`QUEST CLEAR! +${earnedExp} EXP`);
+        setMessage(`${displayName} CLEAR! +${earnedExp} EXP`);
       }
 
       updateCurrentUserAndList({ ...currentUser, level: newLevel, exp: finalExp });
     } else {
-      setMessage(`QUEST CLEAR! +${earnedExp} EXP (Sign in to save)`);
+      setMessage(`${displayName} CLEAR! +${earnedExp} EXP (Sign in to save)`);
     }
     
     setTimeout(() => setMessage(""), 5000);
-  }, [duration, currentUser, updateCurrentUserAndList]);
+  }, [duration, currentUser, updateCurrentUserAndList, questName]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -190,16 +197,30 @@ export default function PomodoroQuest() {
             onCancel={() => setIsAuthMode('none')}
           />
         ) : (
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center gap-8 w-full">
+            {/* クエスト名入力 */}
+            {!isActive && (
+              <div className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
+                <input 
+                  type="text"
+                  placeholder="Enter Quest Name..."
+                  value={questName}
+                  onChange={(e) => setQuestName(e.target.value)}
+                  className="w-full bg-foreground/5 border-2 border-primary/20 rounded-2xl px-6 py-3 focus:border-primary/50 focus:outline-none transition-all font-bold text-center placeholder:opacity-30"
+                />
+              </div>
+            )}
+
             <TimerDisplay 
               timeLeft={timeLeft}
               duration={duration}
               isActive={isActive}
               message={message}
               formatTime={formatTime}
+              questName={questName}
             />
 
-            <div className="flex gap-8 md:gap-10 mt-16 md:mt-20">
+            <div className="flex gap-8 md:gap-10">
               <button
                 onClick={toggleTimer}
                 className={`group relative w-20 h-20 md:w-24 md:h-24 rounded-[2.5rem] transition-all duration-300 transform active:scale-90 flex items-center justify-center border-b-4 ${

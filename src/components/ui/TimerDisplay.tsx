@@ -9,9 +9,10 @@ type TimerDisplayProps = {
   isActive: boolean;
   message: string;
   formatTime: (seconds: number) => string;
+  questName?: string;
 };
 
-export function TimerDisplay({ timeLeft, duration, isActive, message, formatTime }: TimerDisplayProps) {
+export function TimerDisplay({ timeLeft, duration, isActive, message, formatTime, questName }: TimerDisplayProps) {
   return (
     <div className="relative flex flex-col items-center">
       <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] md:w-[420px] md:h-[420px] border border-primary/10 rounded-full transition-all duration-1000 ${isActive ? 'scale-110 opacity-40' : 'scale-100 opacity-10'}`} />
@@ -22,7 +23,7 @@ export function TimerDisplay({ timeLeft, duration, isActive, message, formatTime
         <div className="absolute top-10 flex flex-col items-center gap-1">
           <Swords className={`w-4 h-4 ${isActive ? 'text-primary animate-pulse' : 'opacity-20'}`} />
           <span className={`text-[9px] font-black uppercase tracking-[0.4em] ${isActive ? 'text-primary' : 'opacity-20'}`}>
-            Focus Quest
+            {isActive && questName ? questName : "Focus Quest"}
           </span>
         </div>
 
