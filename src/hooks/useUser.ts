@@ -21,6 +21,8 @@ export function useUser() {
       exp: 0, 
       role: 'admin', 
       joinedAt: Date.now(),
+      totalFocusTime: 0,
+      completedQuestsCount: 0,
       unlockedTitles: ['novice'], 
       currentTitleId: 'novice' 
     }];
@@ -57,6 +59,26 @@ export function useUser() {
   }, []);
 
   /**
+   * 管理者用：特定のユーザー情報を更新する
+   */
+  const adminUpdateUser = useCallback((updatedUser: User) => {
+    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+    // もしログイン中の自分自身を更新した場合は、セッションも更新する
+    if (currentUser?.id === updatedUser.id) {
+      setCurrentUser(updatedUser);
+    }
+  }, [currentUser]);
+
+  /**
+   * 管理者用：特定のユーザーをギルドから追放（削除）する
+   */
+  const adminDeleteUser = useCallback((id: string) => {
+    if (currentUser?.id === id) return { success: false, error: "Cannot ban yourself." };
+    setUsers(prev => prev.filter(u => u.id !== id));
+    return { success: true };
+  }, [currentUser]);
+
+  /**
    * クエスト履歴を追加する
    */
   const addQuestLog = useCallback((log: QuestLog) => {
@@ -67,7 +89,6 @@ export function useUser() {
    * 称号のアンロック条件をチェックする
    */
   const checkNewTitles = useCallback((user: User, logs: QuestLog[], onUnlock: (titleName: string) => void) => {
-    // まだ持っていない称号の中で、条件を満たしているものを探す
     const newlyUnlocked = titles
       .filter(t => !user.unlockedTitles.includes(t.id))
       .filter(t => t.condition(user, logs))
@@ -79,7 +100,6 @@ export function useUser() {
         unlockedTitles: [...user.unlockedTitles, ...newlyUnlocked]
       };
       updateCurrentUserAndList(updatedUser);
-      // アンロック通知（最初に見つかったもの）
       onUnlock(titles.find(t => t.id === newlyUnlocked[0])?.name || "");
       return true;
     }
@@ -119,6 +139,8 @@ export function useUser() {
       exp: 0, 
       role: 'user',
       joinedAt: Date.now(),
+      totalFocusTime: 0,
+      completedQuestsCount: 0,
       unlockedTitles: ['novice'], 
       currentTitleId: 'novice' 
     };
@@ -133,6 +155,8 @@ export function useUser() {
     questLogs,
     setCurrentUser,
     updateCurrentUserAndList,
+    adminUpdateUser,
+    adminDeleteUser,
     addQuestLog,
     checkNewTitles,
     login,
