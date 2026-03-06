@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Users, Trophy, Shield, Crown, Search, MessageSquare, Zap } from 'lucide-react';
+import { Users, Trophy, Shield, Crown, Search, MessageSquare, Zap, Flame, Clock, Swords } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { titles } from '@/constants';
 
@@ -17,8 +17,12 @@ export default function GuildPage() {
     return b.exp - a.exp;
   });
 
+  // 全ユーザーの統計を合算
+  const totalGuildFocusTime = users.reduce((acc, u) => acc + (u.totalFocusTime || 0), 0);
+  const totalQuestsSlain = users.reduce((acc, u) => acc + (u.completedQuestsCount || 0), 0);
+
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen p-4 md:p-8 pt-8 max-w-4xl mx-auto animate-in fade-in duration-500">
+    <div className="flex flex-col items-center justify-start min-h-screen p-4 md:p-8 pt-8 max-w-4xl mx-auto animate-in fade-in duration-500 pb-24">
       
       {/* Header */}
       <div className="w-full flex items-center justify-between mb-8 pb-4 border-b-2 border-primary/20">
@@ -32,6 +36,39 @@ export default function GuildPage() {
         <div className="flex flex-col items-end">
           <span className="text-[10px] font-black opacity-40 uppercase tracking-widest">Guild Population</span>
           <span className="text-xl font-black italic text-primary">{users.length}</span>
+        </div>
+      </div>
+
+      {/* Guild Global Stats */}
+      <div className="w-full bg-primary/5 border-2 border-primary/20 rounded-[2.5rem] p-6 mb-10 shadow-lg relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-all group-hover:scale-110">
+          <Flame className="w-24 h-24 text-primary fill-current" />
+        </div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row justify-around items-center gap-8">
+          <div className="text-center">
+            <span className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mb-2 block">Guild Total Focus</span>
+            <div className="flex items-center justify-center gap-2 text-primary">
+              <Clock className="w-5 h-5" />
+              <span className="text-3xl font-black italic tracking-tighter">
+                {totalGuildFocusTime}
+              </span>
+              <span className="text-[10px] font-black mt-2 opacity-60">MINS</span>
+            </div>
+          </div>
+
+          <div className="h-px w-20 bg-primary/20 md:h-12 md:w-px" />
+
+          <div className="text-center">
+            <span className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mb-2 block">Monster Quests Slain</span>
+            <div className="flex items-center justify-center gap-2 text-primary">
+              <Swords className="w-5 h-5" />
+              <span className="text-3xl font-black italic tracking-tighter">
+                {totalQuestsSlain}
+              </span>
+              <span className="text-[10px] font-black mt-2 opacity-60">TASKS</span>
+            </div>
+          </div>
         </div>
       </div>
 
