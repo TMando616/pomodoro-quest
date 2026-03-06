@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 // Lucide React からアイコンをインポート
-import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw, BookOpen, MessageSquare } from 'lucide-react';
+import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw, BookOpen, MessageSquare, Target } from 'lucide-react';
 // 型定義と定数をインポート
 import { QuestLog, User } from '@/types';
 import { titles } from '@/constants';

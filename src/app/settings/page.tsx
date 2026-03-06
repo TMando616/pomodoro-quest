@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Settings, Bell, Clock, Monitor, Shield, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Settings, Clock, Monitor, Shield, Trash2, CheckCircle2 } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useAudio } from '@/hooks/useAudio';
 
@@ -135,7 +135,7 @@ export default function SettingsPage() {
 
       </div>
 
-      {/* Save Success Indicator (Mock) */}
+      {/* Save Success Indicator */}
       <div className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">
         <CheckCircle2 className="w-3 h-3" /> Settings synchronized with Guild scrolls
       </div>

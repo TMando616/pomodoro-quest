@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { ScrollText, Clock, Zap, X, ShieldAlert } from 'lucide-react';
+import { ScrollText, Clock, Zap, X } from 'lucide-react';
 import { QuestLog } from '@/types';
 
 type QuestLogPanelProps = {

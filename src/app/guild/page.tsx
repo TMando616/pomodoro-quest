@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Users, Trophy, Shield, Crown, MessageSquare, Zap, Flame, Clock, Swords, Filter, Activity } from 'lucide-react';
+import { Users, Trophy, Shield, Crown, Zap, Flame, Clock, Swords, Filter, Activity } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { titles } from '@/constants';
 
@@ -31,7 +31,6 @@ export default function GuildPage() {
   const totalQuestsSlain = users.reduce((acc, u) => acc + (u.completedQuestsCount || 0), 0);
 
   // 全ユーザーの全ログを結合して最新順に並べる
-  // (注: 本来はサーバー側で行うが、今回はローカルの全ログを表示)
   const allLogs = [...questLogs].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
 
   // ギルド全体のランク（モック判定）
@@ -88,10 +87,7 @@ export default function GuildPage() {
       </div>
 
       <div className="w-full grid gap-8 md:grid-cols-3">
-        
-        {/* Left Column: Activity & Sort */}
         <div className="md:col-span-1 space-y-6">
-          {/* Sorting */}
           <div className="bg-foreground/5 border-2 border-primary/10 rounded-[2rem] p-6">
             <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
               <Filter className="w-3 h-3 text-primary" /> Rank Category
@@ -101,7 +97,7 @@ export default function GuildPage() {
                 <button
                   key={cat}
                   onClick={() => setSortCategory(cat)}
-                  className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-[10px] font-black uppercase tracking-widest ${sortCategory === cat ? 'border-primary bg-primary/10 text-primary' : 'border-transparent bg-background/50 opacity-40 hover:opacity-100'}`}
+                  className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-[10px] font-black uppercase tracking-widest ${sortCategory === cat ? 'border-primary bg-primary/10 text-primary shadow-md' : 'border-transparent bg-background/50 opacity-40 hover:opacity-100'}`}
                 >
                   {cat === 'level' ? 'Highest Level' : cat === 'time' ? 'Total Focus' : 'Quests Cleared'}
                 </button>
@@ -109,7 +105,6 @@ export default function GuildPage() {
             </div>
           </div>
 
-          {/* Recent Activity */}
           <div className="bg-foreground/5 border-2 border-primary/10 rounded-[2rem] p-6 overflow-hidden">
             <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
               <Activity className="w-3 h-3 text-primary" /> Tavern Chatter
@@ -133,7 +128,6 @@ export default function GuildPage() {
           </div>
         </div>
 
-        {/* Right Column: Leaderboard */}
         <div className="md:col-span-2 space-y-4">
           <h2 className="text-xs font-black uppercase tracking-[0.3em] opacity-50 px-2 flex items-center gap-2">
             <Trophy className="w-3 h-3" /> Hall of Fame

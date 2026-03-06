@@ -2,24 +2,27 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+export type AppSettings = {
+  defaultDuration: number;
+  showNotifications: boolean;
+  autoStartRest: boolean;
+  compactHUD: boolean;
+};
+
 /**
  * アプリケーションの全体設定を管理するフック
  */
 export function useSettings() {
-  const [settings, setSettings] = useState(() => {
-    if (typeof window === 'undefined') return {
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    const defaultSettings: AppSettings = {
       defaultDuration: 25,
       showNotifications: true,
       autoStartRest: false,
       compactHUD: false,
     };
+    if (typeof window === 'undefined') return defaultSettings;
     const saved = localStorage.getItem('pq_settings');
-    return saved ? JSON.parse(saved) : {
-      defaultDuration: 25,
-      showNotifications: true,
-      autoStartRest: false,
-      compactHUD: false,
-    };
+    return saved ? JSON.parse(saved) : defaultSettings;
   });
 
   // 保存処理
@@ -27,8 +30,8 @@ export function useSettings() {
     localStorage.setItem('pq_settings', JSON.stringify(settings));
   }, [settings]);
 
-  const updateSettings = useCallback((newSettings: Partial<typeof settings>) => {
-    setSettings((prev: any) => ({ ...prev, ...newSettings }));
+  const updateSettings = useCallback((newSettings: Partial<AppSettings>) => {
+    setSettings((prev) => ({ ...prev, ...newSettings }));
   }, []);
 
   return {
