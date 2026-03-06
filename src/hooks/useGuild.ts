@@ -4,6 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 
 export type GuildInfo = {
   globalMessage: string;
+  dailyQuest: {
+    title: string;
+    requirement: number; // 分数
+    rewardTitle: string;
+  };
   lastUpdated: number;
 };
 
@@ -12,9 +17,18 @@ export type GuildInfo = {
  */
 export function useGuild() {
   const [guildInfo, setGuildInfo] = useState<GuildInfo>(() => {
-    if (typeof window === 'undefined') return { globalMessage: "", lastUpdated: Date.now() };
+    const defaultInfo = { 
+      globalMessage: "Welcome to the guild, new adventurer!", 
+      dailyQuest: {
+        title: "The Hour of Power",
+        requirement: 60,
+        rewardTitle: "Daily Hero"
+      },
+      lastUpdated: Date.now() 
+    };
+    if (typeof window === 'undefined') return defaultInfo;
     const saved = localStorage.getItem('pq_guild_info');
-    return saved ? JSON.parse(saved) : { globalMessage: "Welcome to the guild, new adventurer!", lastUpdated: Date.now() };
+    return saved ? JSON.parse(saved) : defaultInfo;
   });
 
   useEffect(() => {
@@ -22,14 +36,24 @@ export function useGuild() {
   }, [guildInfo]);
 
   const updateGlobalMessage = useCallback((message: string) => {
-    setGuildInfo({
+    setGuildInfo(prev => ({
+      ...prev,
       globalMessage: message,
       lastUpdated: Date.now()
-    });
+    }));
+  }, []);
+
+  const updateDailyQuest = useCallback((title: string, req: number, reward: string) => {
+    setGuildInfo(prev => ({
+      ...prev,
+      dailyQuest: { title, requirement: req, rewardTitle: reward },
+      lastUpdated: Date.now()
+    }));
   }, []);
 
   return {
     guildInfo,
-    updateGlobalMessage
+    updateGlobalMessage,
+    updateDailyQuest
   };
 }

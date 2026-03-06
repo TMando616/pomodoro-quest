@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Shield, Users, Trash2, AlertCircle, ArrowLeft, RefreshCw, MessageSquare, Send, BarChart3, TrendingUp } from 'lucide-react';
+import { Shield, Users, Trash2, AlertCircle, ArrowLeft, RefreshCw, MessageSquare, Send, TrendingUp, Target, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from '@/hooks/useUser';
 import { useAudio } from '@/hooks/useAudio';
@@ -12,10 +12,14 @@ import { useGuild } from '@/hooks/useGuild';
  */
 export default function AdminPage() {
   const { users, currentUser, adminDeleteUser, adminUpdateUser } = useUser();
-  const { guildInfo, updateGlobalMessage } = useGuild();
+  const { guildInfo, updateGlobalMessage, updateDailyQuest } = useGuild();
   const { playEffect } = useAudio();
   const [error, setError] = useState("");
+  
   const [newGlobalMsg, setNewGlobalMsg] = useState(guildInfo.globalMessage);
+  const [dqTitle, setDqTitle] = useState(guildInfo.dailyQuest.title);
+  const [dqReq, setDqReq] = useState(guildInfo.dailyQuest.requirement);
+  const [dqReward, setDqReward] = useState(guildInfo.dailyQuest.rewardTitle);
 
   // アクセス制限
   if (!currentUser || currentUser.role !== 'admin') {
@@ -61,45 +65,57 @@ export default function AdminPage() {
       </div>
 
       <div className="w-full grid gap-8 md:grid-cols-3 mb-10">
-        {/* Statistics Widgets */}
-        <div className="md:col-span-2 space-y-6">
-          <div className="bg-foreground/5 border-2 border-primary/10 rounded-[2.5rem] p-8 shadow-xl">
-            <h3 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" /> Guild Activity Trend (Peak Focus)
-            </h3>
-            <div className="flex items-end justify-between gap-2 h-32 px-4">
-              {[40, 70, 45, 90, 65, 30, 50, 85, 100, 40, 20, 60].map((val, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                  <div 
-                    className="w-full bg-primary/20 border-t-2 border-primary/40 rounded-t-lg transition-all duration-1000 hover:bg-primary/40"
-                    style={{ height: `${val}%` }}
-                  />
-                  <span className="text-[6px] font-black opacity-30">{i * 2}h</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        
+        {/* Left: Global Message */}
+        <div className="md:col-span-1 bg-foreground/5 border-2 border-red-500/20 rounded-[2.5rem] p-6 shadow-lg flex flex-col">
+          <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-red-400">
+            <MessageSquare className="w-3 h-3" /> Broadcaster
+          </h3>
+          <textarea 
+            value={newGlobalMsg}
+            onChange={(e) => setNewGlobalMsg(e.target.value)}
+            className="flex-1 bg-background/50 border border-red-500/20 rounded-2xl p-4 text-xs focus:outline-none focus:border-red-500/50 transition-all resize-none min-h-[100px] mb-4"
+          />
+          <button 
+            onClick={() => { playEffect('click'); updateGlobalMessage(newGlobalMsg); alert("Broadcasted!"); }}
+            className="w-full bg-red-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl shadow-lg hover:bg-red-500 transition-all flex items-center justify-center gap-2"
+          >
+            <Send className="w-4 h-4" /> Broadcast
+          </button>
         </div>
 
-        {/* Global Message Editor */}
-        <div className="md:col-span-1">
-          <div className="h-full bg-foreground/5 border-2 border-red-500/20 rounded-[2.5rem] p-6 shadow-lg flex flex-col">
-            <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-red-400">
-              <MessageSquare className="w-3 h-3" /> Broadcaster
-            </h3>
-            <textarea 
-              value={newGlobalMsg}
-              onChange={(e) => setNewGlobalMsg(e.target.value)}
-              placeholder="Announce something..."
-              className="flex-1 bg-background/50 border border-red-500/20 rounded-2xl p-4 text-xs focus:outline-none focus:border-red-500/50 transition-all resize-none min-h-[120px] mb-4"
-            />
-            <button 
-              onClick={() => { playEffect('click'); updateGlobalMessage(newGlobalMsg); alert("Broadcast Sent!"); }}
-              className="w-full bg-red-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl shadow-lg hover:bg-red-500 transition-all flex items-center justify-center gap-2"
-            >
-              <Send className="w-4 h-4" /> Broadcast
-            </button>
+        {/* Center: Daily Quest Editor */}
+        <div className="md:col-span-1 bg-foreground/5 border-2 border-primary/20 rounded-[2.5rem] p-6 shadow-lg flex flex-col">
+          <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-primary">
+            <Target className="w-3 h-3" /> Daily Challenge
+          </h3>
+          <div className="space-y-3 flex-1">
+            <input value={dqTitle} onChange={e => setDqTitle(e.target.value)} placeholder="Quest Title" className="w-full bg-background/50 border border-primary/20 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-primary/50" />
+            <div className="flex items-center gap-2">
+              <input type="number" value={dqReq} onChange={e => setDqReq(Number(e.target.value))} className="w-20 bg-background/50 border border-primary/20 rounded-xl px-4 py-2 text-xs focus:outline-none" />
+              <span className="text-[10px] font-black opacity-40 uppercase">Mins Req.</span>
+            </div>
+            <input value={dqReward} onChange={e => setDqReward(e.target.value)} placeholder="Reward Title" className="w-full bg-background/50 border border-primary/20 rounded-xl px-4 py-2 text-xs focus:outline-none" />
           </div>
+          <button 
+            onClick={() => { playEffect('click'); updateDailyQuest(dqTitle, dqReq, dqReward); alert("Daily Mission Updated!"); }}
+            className="w-full bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 mt-4"
+          >
+            <Star className="w-4 h-4" /> Update Mission
+          </button>
+        </div>
+
+        {/* Right: Activity Trend */}
+        <div className="md:col-span-1 bg-foreground/5 border-2 border-primary/10 rounded-[2.5rem] p-6 shadow-lg flex flex-col justify-between">
+          <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-primary" /> Active Hours
+          </h3>
+          <div className="flex items-end justify-between gap-1 h-24">
+            {[40, 70, 45, 90, 65, 30, 50, 85, 100, 40].map((val, i) => (
+              <div key={i} className="flex-1 bg-primary/20 border-t border-primary/40 rounded-t-sm" style={{ height: `${val}%` }} />
+            ))}
+          </div>
+          <p className="text-[8px] opacity-40 mt-4 text-center">Peak activity detected at 22:00</p>
         </div>
       </div>
 
@@ -135,7 +151,7 @@ export default function AdminPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => { playEffect('click'); if(confirm('Reset?')) adminUpdateUser({...user, level:1, exp:0}); }} className="p-2 text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all"><RefreshCw className="w-4 h-4" /></button>
+                      <button onClick={() => { playEffect('click'); if(confirm('Reset?')) adminUpdateUser({...user, level:1, exp:0, totalFocusTime:0, completedQuestsCount:0}); }} className="p-2 text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all"><RefreshCw className="w-4 h-4" /></button>
                       <button onClick={() => handleDelete(user.id)} disabled={user.id === currentUser.id} className={`p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all ${user.id === currentUser.id ? 'opacity-20' : ''}`}><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
