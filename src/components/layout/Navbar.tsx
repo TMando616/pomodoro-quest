@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, BookOpen, Users } from 'lucide-react';
+import { Home, User, BookOpen, Users, Settings } from 'lucide-react';
 
 /**
  * アプリケーション全体のナビゲーションバー
@@ -17,6 +17,7 @@ export function Navbar() {
     { href: '/journal', label: 'Journal', icon: BookOpen },
     { href: '/guild', label: 'Guild', icon: Users },
     { href: '/profile', label: 'Profile', icon: User },
+    { href: '/settings', label: 'Settings', icon: Settings },
   ];
 
   return (
