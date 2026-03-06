@@ -8,6 +8,8 @@ export type User = {
   exp: number;              // 現在の経験値 (0〜999)
   role: 'user' | 'admin';   // 役割（管理者機能の実装準備）
   joinedAt: number;         // ギルド（アプリ）に登録した日
+  totalFocusTime: number;   // 累計集中時間（分）
+  completedQuestsCount: number; // 累計クリアクエスト数
   unlockedTitles: string[]; // アンロック済みの称号IDのリスト
   currentTitleId?: string;  // 現在セットしている称号のID
 };
@@ -31,6 +33,7 @@ export type QuestLog = {
   userId: string;    // 実行したユーザーのID（ゲストなら 'guest'）
   name: string;      // クエスト名
   duration: number;  // 集中した時間（分）
+  difficulty: 'easy' | 'normal' | 'hard' | 'insane'; // 難易度
   earnedExp: number; // 獲得した経験値
   createdAt: number; // 完了した日時（タイムスタンプ）
 };

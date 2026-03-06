@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 
 // タイマーのモード定義
 export type TimerMode = 'quest' | 'rest';
+export type Difficulty = 'easy' | 'normal' | 'hard' | 'insane';
 
 type UseTimerProps = {
-  onComplete: (mode: TimerMode, isBossMode: boolean, duration: number, questName: string) => void;
+  onComplete: (mode: TimerMode, isBossMode: boolean, duration: number, questName: string, difficulty: Difficulty) => void;
 };
 
 /**
@@ -20,25 +21,26 @@ export function useTimer({ onComplete }: UseTimerProps) {
   const [isActive, setIsActive] = useState(false); // 動作中かどうか
   const [mode, setMode] = useState<TimerMode>('quest'); // クエスト中か休憩中か
   const [isBossMode, setIsBossMode] = useState(false); // ボス戦モードかどうか
+  const [difficulty, setDifficulty] = useState<Difficulty>('normal'); // 難易度
 
   /**
    * タイマー終了時の内部処理
    */
   const handleTimerComplete = useCallback(() => {
     setIsActive(false);
-    // 完了時のコールバックを呼び出し（外部の page.tsx 等でEXP加算などを行う）
-    onComplete(mode, isBossMode, duration, questName);
+    // 完了時のコールバックを呼び出し
+    onComplete(mode, isBossMode, duration, questName, difficulty);
     
     // 終了後の自動セットアップ
     if (mode === 'quest') {
       setMode('rest');
-      setTimeLeft(5 * 60); // クエスト後はデフォルト5分休憩
+      setTimeLeft(5 * 60);
     } else {
       setMode('quest');
-      setTimeLeft(duration * 60); // 休憩後は設定した時間に戻す
-      setIsBossMode(false); // ボス戦フラグをリセット
+      setTimeLeft(duration * 60);
+      setIsBossMode(false);
     }
-  }, [mode, isBossMode, duration, onComplete, questName]);
+  }, [mode, isBossMode, duration, onComplete, questName, difficulty]);
 
   /**
    * カウントダウンの実行
@@ -50,9 +52,9 @@ export function useTimer({ onComplete }: UseTimerProps) {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          return 0; // 終了
+          return 0;
         }
-        return prev - 1; // 1秒減らす
+        return prev - 1;
       });
     }, 1000);
 
@@ -61,7 +63,6 @@ export function useTimer({ onComplete }: UseTimerProps) {
 
   /**
    * 残り時間が0になった瞬間の検知
-   * （setInterval内での状態更新との競合を避けるため独立させています）
    */
   useEffect(() => {
     if (timeLeft === 0 && isActive) {
@@ -74,32 +75,27 @@ export function useTimer({ onComplete }: UseTimerProps) {
 
   // --- 操作用関数 ---
 
-  // 開始/一時停止
   const toggleTimer = useCallback(() => {
     setIsActive(prev => !prev);
   }, []);
 
-  // リセット
   const resetTimer = useCallback(() => {
     setIsActive(false);
     setTimeLeft(mode === 'quest' ? duration * 60 : 5 * 60);
   }, [mode, duration]);
 
-  // 時間の選択
   const selectDuration = useCallback((mins: number) => {
     if (isActive) return;
     setDuration(mins);
     if (mode === 'quest') setTimeLeft(mins * 60);
   }, [isActive, mode]);
 
-  // 休憩時間のセット
   const setRestTime = useCallback((mins: number) => {
     setIsActive(false);
     setMode('rest');
     setTimeLeft(mins * 60);
   }, []);
 
-  // クエストモードへの手動切り替え
   const setQuestMode = useCallback(() => {
     setIsActive(false);
     setMode('quest');
@@ -118,6 +114,8 @@ export function useTimer({ onComplete }: UseTimerProps) {
     setMode,
     isBossMode,
     setIsBossMode,
+    difficulty,
+    setDifficulty,
     toggleTimer,
     resetTimer,
     selectDuration,
