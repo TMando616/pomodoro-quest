@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Users, Trophy, Shield, Crown, Search, MessageSquare, Zap, Flame, Clock, Swords, Filter } from 'lucide-react';
+import { Users, Trophy, Shield, Crown, MessageSquare, Zap, Flame, Clock, Swords, Filter, Activity } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { titles } from '@/constants';
 
@@ -11,7 +11,7 @@ type SortCategory = 'level' | 'time' | 'quests';
  * ギルド酒場（リーダーボード・ユーザー一覧）ページ
  */
 export default function GuildPage() {
-  const { users, currentUser } = useUser();
+  const { users, currentUser, questLogs } = useUser();
   const [sortCategory, setSortCategory] = useState<SortCategory>('level');
 
   // カテゴリに基づいてユーザーをソート
@@ -30,6 +30,10 @@ export default function GuildPage() {
   const totalGuildFocusTime = users.reduce((acc, u) => acc + (u.totalFocusTime || 0), 0);
   const totalQuestsSlain = users.reduce((acc, u) => acc + (u.completedQuestsCount || 0), 0);
 
+  // 全ユーザーの全ログを結合して最新順に並べる
+  // (注: 本来はサーバー側で行うが、今回はローカルの全ログを表示)
+  const allLogs = [...questLogs].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
+
   // ギルド全体のランク（モック判定）
   const getGuildGrade = () => {
     if (totalGuildFocusTime > 10000) return { name: 'Legendary Guild', color: 'text-yellow-500' };
@@ -40,7 +44,7 @@ export default function GuildPage() {
   const guildGrade = getGuildGrade();
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen p-4 md:p-8 pt-8 max-w-4xl mx-auto animate-in fade-in duration-500 pb-24">
+    <div className="flex flex-col items-center justify-start min-h-screen p-4 md:p-8 pt-8 max-w-5xl mx-auto animate-in fade-in duration-500 pb-24">
       
       {/* Header */}
       <div className="w-full flex items-center justify-between mb-8 pb-4 border-b-2 border-primary/20">
@@ -51,8 +55,8 @@ export default function GuildPage() {
             <p className={`text-[10px] font-black uppercase tracking-widest ${guildGrade.color}`}>{guildGrade.name}</p>
           </div>
         </div>
-        <div className="flex flex-col items-end">
-          <span className="text-[10px] font-black opacity-40 uppercase tracking-widest">Guild Population</span>
+        <div className="flex flex-col items-end text-right">
+          <span className="text-[10px] font-black opacity-40 uppercase tracking-widest">Active Adventurers</span>
           <span className="text-xl font-black italic text-primary">{users.length}</span>
         </div>
       </div>
@@ -83,36 +87,48 @@ export default function GuildPage() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="w-full grid gap-8 md:grid-cols-3">
         
-        {/* Left Column: Filters & Notices */}
+        {/* Left Column: Activity & Sort */}
         <div className="md:col-span-1 space-y-6">
+          {/* Sorting */}
           <div className="bg-foreground/5 border-2 border-primary/10 rounded-[2rem] p-6">
             <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-              <Filter className="w-3 h-3 text-primary" /> Sort Hall of Fame
+              <Filter className="w-3 h-3 text-primary" /> Rank Category
             </h3>
             <div className="flex flex-col gap-2">
               {(['level', 'time', 'quests'] as SortCategory[]).map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSortCategory(cat)}
-                  className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-[10px] font-black uppercase tracking-widest ${sortCategory === cat ? 'border-primary bg-primary/10 text-primary shadow-md' : 'border-transparent bg-background/50 opacity-40 hover:opacity-100'}`}
+                  className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-[10px] font-black uppercase tracking-widest ${sortCategory === cat ? 'border-primary bg-primary/10 text-primary' : 'border-transparent bg-background/50 opacity-40 hover:opacity-100'}`}
                 >
-                  {cat === 'level' ? 'Highest Level' : cat === 'time' ? 'Most Focused' : 'Quest Slayers'}
+                  {cat === 'level' ? 'Highest Level' : cat === 'time' ? 'Total Focus' : 'Quests Cleared'}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="bg-primary/5 border-2 border-primary/20 rounded-[2rem] p-6">
-            <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-primary">
-              <MessageSquare className="w-3 h-3" /> Tavern Rumors
+          {/* Recent Activity */}
+          <div className="bg-foreground/5 border-2 border-primary/10 rounded-[2rem] p-6 overflow-hidden">
+            <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Activity className="w-3 h-3 text-primary" /> Tavern Chatter
             </h3>
-            <div className="space-y-3">
-              <div className="bg-background/40 p-3 rounded-xl border border-primary/10">
-                <p className="text-[9px] font-bold leading-relaxed opacity-80 italic">"I heard someone reached Level 10 yesterday. Absolute legend."</p>
-              </div>
+            <div className="space-y-4">
+              {allLogs.length === 0 ? (
+                <p className="text-[10px] opacity-30 italic">Silence fills the air...</p>
+              ) : (
+                allLogs.map(log => {
+                  const user = users.find(u => u.id === log.userId);
+                  return (
+                    <div key={log.id} className="border-l-2 border-primary/20 pl-3 py-1">
+                      <p className="text-[9px] font-black text-primary uppercase">{user?.username || 'Unknown Hero'}</p>
+                      <p className="text-[10px] opacity-80 leading-tight">Cleared <span className="font-bold text-foreground">{log.name}</span></p>
+                      <p className="text-[8px] opacity-40 mt-1">{new Date(log.createdAt).toLocaleTimeString()}</p>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -120,7 +136,7 @@ export default function GuildPage() {
         {/* Right Column: Leaderboard */}
         <div className="md:col-span-2 space-y-4">
           <h2 className="text-xs font-black uppercase tracking-[0.3em] opacity-50 px-2 flex items-center gap-2">
-            <Trophy className="w-3 h-3" /> Hall of Fame ({sortCategory})
+            <Trophy className="w-3 h-3" /> Hall of Fame
           </h2>
           <div className="space-y-3">
             {sortedUsers.map((user, index) => {
@@ -148,7 +164,7 @@ export default function GuildPage() {
                       <div className="text-xs font-black italic text-primary">{user.completedQuestsCount || 0} Qs</div>
                     )}
                     <div className="flex items-center justify-end gap-1 mt-1">
-                      <div className="w-16 h-1 bg-background rounded-full overflow-hidden border border-primary/10">
+                      <div className="w-16 h-1 bg-background rounded-full border border-primary/10 overflow-hidden">
                         <div className="h-full bg-primary" style={{ width: `${(user.exp / 1000) * 100}%` }} />
                       </div>
                     </div>
