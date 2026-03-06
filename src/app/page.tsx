@@ -83,7 +83,13 @@ export default function PomodoroQuest() {
         }
 
         // ユーザー情報の更新
-        const updatedUser = { ...currentUser, level: newLevel, exp: finalExp };
+        const updatedUser = { 
+          ...currentUser, 
+          level: newLevel, 
+          exp: finalExp,
+          totalFocusTime: currentUser.totalFocusTime + duration,
+          completedQuestsCount: currentUser.completedQuestsCount + 1
+        };
         updateCurrentUserAndList(updatedUser);
         
         // 新しい称号がアンロックされたかチェック
