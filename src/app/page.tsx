@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 // Lucide React からアイコンをインポート
-import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw, BookOpen, ShieldAlert } from 'lucide-react';
+import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw, BookOpen, MessageSquare } from 'lucide-react';
 // 型定義と定数をインポート
 import { QuestLog } from '@/types';
 import { titles } from '@/constants';
@@ -18,29 +18,36 @@ import { QuestLogPanel } from '@/components/ui/QuestLogPanel';
 import { useAudio } from '@/hooks/useAudio';
 import { useUser } from '@/hooks/useUser';
 import { useTimer, Difficulty } from '@/hooks/useTimer';
+import { useGuild } from '@/hooks/useGuild';
 
 /**
  * メインのアプリケーションコンポーネント
+ * ポモドーロタイマーとRPG要素を組み合わせたメイン画面を提供します。
  */
 export default function PomodoroQuest() {
-  const [message, setMessage] = useState("");
-  const [currentTheme, setCurrentTheme] = useState('emerald');
-  const [isLogsOpen, setIsLogsOpen] = useState(false);
-  const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none');
-  const [authForm, setAuthForm] = useState({ username: '' });
-  const [authError, setAuthError] = useState("");
+  // --- UI表示用の状態管理 ---
+  const [message, setMessage] = useState(""); // 画面中央に表示する通知メッセージ
+  const [currentTheme, setCurrentTheme] = useState('emerald'); // 現在選択されているテーマ名
+  const [isLogsOpen, setIsLogsOpen] = useState(false); // 履歴パネルが開いているか
+  const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none'); // 認証画面の状態
+  const [authForm, setAuthForm] = useState({ username: '' }); // ログイン/登録フォームの入力値
+  const [authError, setAuthError] = useState(""); // 認証エラーメッセージ
 
+  // --- カスタムフックからロジックを抽出 ---
   const { isSoundOn, playEffect, toggleSound } = useAudio();
   const { 
     currentUser, questLogs, updateCurrentUserAndList, 
     addQuestLog, checkNewTitles, login, register, logout 
   } = useUser();
+  const { guildInfo } = useGuild();
 
+  /**
+   * タイマーが完了した時の処理
+   */
   const handleComplete = useCallback((mode: 'quest' | 'rest', isBoss: boolean, duration: number, qName: string, difficulty: Difficulty) => {
     playEffect('complete');
     
     if (mode === 'quest') {
-      // 難易度倍率の決定
       const multipliers = { easy: 1.0, normal: 1.5, hard: 2.0, insane: 3.0 };
       let earnedExp = Math.floor(duration * 10 * multipliers[difficulty]);
       if (isBoss) earnedExp *= 2;
@@ -65,8 +72,8 @@ export default function PomodoroQuest() {
           ...currentUser, 
           level: newLevel, 
           exp: finalExp,
-          totalFocusTime: currentUser.totalFocusTime + duration,
-          completedQuestsCount: currentUser.completedQuestsCount + 1
+          totalFocusTime: (currentUser.totalFocusTime || 0) + duration,
+          completedQuestsCount: (currentUser.completedQuestsCount || 0) + 1
         };
         updateCurrentUserAndList(updatedUser);
         checkNewTitles(updatedUser, [newLog, ...questLogs], (title) => setMessage(`NEW TITLE UNLOCKED: ${title}!`));
@@ -82,7 +89,8 @@ export default function PomodoroQuest() {
   const timer = useTimer({ onComplete: handleComplete });
 
   useEffect(() => { 
-    document.documentElement.setAttribute('data-theme', timer.isBossMode && timer.isActive ? 'ruby' : currentTheme); 
+    const themeToApply = timer.isBossMode && timer.isActive ? 'ruby' : currentTheme;
+    document.documentElement.setAttribute('data-theme', themeToApply); 
   }, [currentTheme, timer.isBossMode, timer.isActive]);
 
   const formatTime = (seconds: number) => {
@@ -107,6 +115,7 @@ export default function PomodoroQuest() {
   return (
     <div className={`min-h-screen transition-colors duration-1000 flex flex-col items-center justify-center font-mono p-4 md:p-8 selection:bg-primary/30 overflow-x-hidden ${timer.isBossMode && timer.isActive ? 'bg-red-950/20' : 'bg-background'}`}>
       
+      {/* 操作パネル */}
       <Sidebar 
         currentUser={currentUser} currentTheme={currentTheme} duration={timer.duration} isActive={timer.isActive} isSoundOn={isSoundOn}
         onLogout={() => { playEffect('click'); logout(); timer.setIsActive(false); }}
@@ -121,6 +130,17 @@ export default function PomodoroQuest() {
       
       <div className="w-full max-w-md flex flex-col items-center gap-10 md:gap-14 my-8">
         
+        {/* ギルド全体へのお知らせ */}
+        {guildInfo.globalMessage && (
+          <div className="w-full bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-4 duration-1000">
+            <MessageSquare className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <p className="text-[10px] font-bold leading-relaxed text-primary/80 italic">
+              "{guildInfo.globalMessage}"
+            </p>
+          </div>
+        )}
+
+        {/* ステータスバー */}
         <Link href={currentUser ? "/profile" : "#"} className="w-full cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]" onClick={(e) => { if(!currentUser) { e.preventDefault(); playEffect('click'); setIsAuthMode('login'); } else { playEffect('click'); } }}>
           <HUD user={currentUser} currentTitle={currentTitleName} />
         </Link>
@@ -141,22 +161,13 @@ export default function PomodoroQuest() {
                     <button onClick={() => { playEffect('click'); timer.setQuestMode(); }} className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${timer.mode === 'quest' ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 opacity-40 hover:opacity-100'}`}><Zap className="w-3 h-3" /> Quest</button>
                     <button onClick={() => { playEffect('click'); timer.setRestTime(5); }} className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${timer.mode === 'rest' ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 opacity-40 hover:opacity-100'}`}><Coffee className="w-3 h-3" /> Rest</button>
                   </div>
-                  
                   {timer.mode === 'quest' && (
                     <div className="flex flex-col items-center gap-3 w-full">
-                      {/* Difficulty Selector */}
                       <div className="flex gap-1.5 p-1 bg-foreground/5 rounded-xl border border-primary/10">
                         {(['easy', 'normal', 'hard', 'insane'] as Difficulty[]).map(d => (
-                          <button
-                            key={d}
-                            onClick={() => { playEffect('click'); timer.setDifficulty(d); }}
-                            className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase transition-all ${timer.difficulty === d ? 'bg-primary text-primary-foreground shadow-md' : 'opacity-40 hover:opacity-100'}`}
-                          >
-                            {d}
-                          </button>
+                          <button key={d} onClick={() => { playEffect('click'); timer.setDifficulty(d); }} className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase transition-all ${timer.difficulty === d ? 'bg-primary text-primary-foreground shadow-md' : 'opacity-40 hover:opacity-100'}`}>{d}</button>
                         ))}
                       </div>
-                      
                       <button onClick={() => { playEffect('click'); timer.setIsBossMode(!timer.isBossMode); }} className={`flex items-center gap-2 px-6 py-2 rounded-full border-2 transition-all font-black text-[10px] uppercase tracking-widest ${timer.isBossMode ? 'bg-red-600 border-red-400 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'bg-foreground/5 border-foreground/10 opacity-40 hover:opacity-100'}`}><Skull className={`w-4 h-4 ${timer.isBossMode ? 'animate-pulse' : ''}`} /> Boss Battle Mode {timer.isBossMode ? 'ON' : 'OFF'}</button>
                     </div>
                   )}
