@@ -30,6 +30,12 @@ export function useJournal() {
     setEntries(prev => [newEntry, ...prev]);
   }, []);
 
+  const updateEntry = useCallback((id: string, content: string, mood: JournalEntry['mood']) => {
+    setEntries(prev => prev.map(entry => 
+      entry.id === id ? { ...entry, content, mood } : entry
+    ));
+  }, []);
+
   const deleteEntry = useCallback((id: string) => {
     setEntries(prev => prev.filter(entry => entry.id !== id));
   }, []);
@@ -37,6 +43,7 @@ export function useJournal() {
   return {
     entries,
     addEntry,
+    updateEntry,
     deleteEntry
   };
 }
