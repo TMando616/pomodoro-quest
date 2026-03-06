@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 // Lucide React からアイコンをインポート
-import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw } from 'lucide-react';
+import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw, BookOpen } from 'lucide-react';
 // 型定義と定数をインポート
 import { QuestLog } from '@/types';
 import { titles } from '@/constants';
@@ -197,9 +197,17 @@ export default function PomodoroQuest() {
               {!timer.isActive && timer.mode === 'quest' && <input type="text" placeholder={timer.isBossMode ? "Enter Boss Name..." : "Enter Quest Name..."} value={timer.questName} onChange={(e) => timer.setQuestName(e.target.value)} className={`w-full bg-foreground/5 border-2 rounded-2xl px-6 py-3 focus:outline-none transition-all font-bold text-center placeholder:opacity-30 ${timer.isBossMode ? 'border-red-500/50 focus:border-red-500' : 'border-primary/20 focus:border-primary/50'}`} />}
               {/* 休憩時間選択 */}
               {!timer.isActive && timer.mode === 'rest' && (
-                <div className="flex justify-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
-                  <button onClick={() => { playEffect('click'); timer.setTimeLeft(5*60); }} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${timer.timeLeft === 5*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}>Short (5m)</button>
-                  <button onClick={() => { playEffect('click'); timer.setTimeLeft(15*60); }} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${timer.timeLeft === 15*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}>Long (15m)</button>
+                <div className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500 w-full">
+                  <div className="flex justify-center gap-3">
+                    <button onClick={() => { playEffect('click'); timer.setTimeLeft(5*60); }} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${timer.timeLeft === 5*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}>Short (5m)</button>
+                    <button onClick={() => { playEffect('click'); timer.setTimeLeft(15*60); }} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${timer.timeLeft === 15*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}>Long (15m)</button>
+                  </div>
+                  {currentUser && (
+                    <Link href="/journal" onClick={() => playEffect('click')} className="flex items-center justify-center gap-2 w-full bg-foreground/5 border-2 border-primary/20 rounded-xl px-4 py-3 hover:bg-primary/10 hover:border-primary/50 transition-all font-black text-[10px] uppercase tracking-widest text-primary/80 group">
+                      <BookOpen className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      Write in Journal
+                    </Link>
+                  )}
                 </div>
               )}
             </div>

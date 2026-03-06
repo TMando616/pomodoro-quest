@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Shield, Crown, Check, Zap, LogOut } from 'lucide-react';
+import React from 'react';
+import { Shield, Crown, Check, LogOut } from 'lucide-react';
 import { titles } from '@/constants';
 import { useUser } from '@/hooks/useUser';
 import { useAudio } from '@/hooks/useAudio';
