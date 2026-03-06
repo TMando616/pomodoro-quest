@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Navbar } from "@/components/layout/Navbar";
 
 // Google Fonts の設定：Geist Sans (サンセリフ体)
 const geistSans = Geist({
@@ -35,10 +36,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground transition-colors duration-500`}
       >
-        {/* children に各ページの内容（page.tsxの内容）が挿入されます */}
-        {children}
+        <Navbar />
+        <main className="pb-20 md:pb-0 md:pt-20 min-h-screen">
+          {children}
+        </main>
       </body>
     </html>
   );
