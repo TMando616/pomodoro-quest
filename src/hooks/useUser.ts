@@ -13,7 +13,17 @@ export function useUser() {
     if (typeof window === 'undefined') return [];
     const saved = localStorage.getItem('pq_users');
     if (saved) return JSON.parse(saved);
-    return [{ id: '1', username: 'Hero', level: 1, exp: 0, unlockedTitles: ['novice'], currentTitleId: 'novice' }];
+    // 初期データ（最初の冒険者）
+    return [{ 
+      id: '1', 
+      username: 'Hero', 
+      level: 1, 
+      exp: 0, 
+      role: 'admin', 
+      joinedAt: Date.now(),
+      unlockedTitles: ['novice'], 
+      currentTitleId: 'novice' 
+    }];
   });
 
   // 現在ログイン中のユーザー
@@ -107,6 +117,8 @@ export function useUser() {
       username, 
       level: 1, 
       exp: 0, 
+      role: 'user',
+      joinedAt: Date.now(),
       unlockedTitles: ['novice'], 
       currentTitleId: 'novice' 
     };

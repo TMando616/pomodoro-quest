@@ -6,6 +6,8 @@ export type User = {
   username: string;         // 冒険者名
   level: number;            // 現在のレベル
   exp: number;              // 現在の経験値 (0〜999)
+  role: 'user' | 'admin';   // 役割（管理者機能の実装準備）
+  joinedAt: number;         // ギルド（アプリ）に登録した日
   unlockedTitles: string[]; // アンロック済みの称号IDのリスト
   currentTitleId?: string;  // 現在セットしている称号のID
 };
