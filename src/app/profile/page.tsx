@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Shield, Crown, Check, LogOut, Clock, Swords, Calendar } from 'lucide-react';
+import { Shield, Crown, Check, LogOut, Clock, Swords, Calendar, Award, Star, Medal, Zap } from 'lucide-react';
 import { titles } from '@/constants';
 import { useUser } from '@/hooks/useUser';
 import { useAudio } from '@/hooks/useAudio';
@@ -39,6 +39,16 @@ export default function ProfilePage() {
   // 参加日をフォーマット
   const joinDate = new Date(currentUser.joinedAt).toLocaleDateString();
 
+  // 実績メダルの定義
+  const badges = [
+    { label: 'First Quest', icon: Zap, active: currentUser.completedQuestsCount >= 1, color: 'text-blue-400' },
+    { label: 'Focus Master', icon: Clock, active: currentUser.totalFocusTime >= 300, color: 'text-emerald-400' },
+    { label: 'Monster Slayer', icon: Swords, active: currentUser.completedQuestsCount >= 10, color: 'text-orange-400' },
+    { label: 'Guild Elite', icon: Star, active: currentUser.level >= 5, color: 'text-yellow-400' },
+    { label: 'Guild Admin', icon: Shield, active: currentUser.role === 'admin', color: 'text-red-400' },
+    { label: 'Legendary', icon: Medal, active: currentUser.level >= 10, color: 'text-purple-400' },
+  ];
+
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 md:p-8 pt-8 max-w-4xl mx-auto animate-in fade-in duration-500 pb-24">
       
@@ -47,21 +57,38 @@ export default function ProfilePage() {
         <HUD user={currentUser} currentTitle={currentTitleName} />
       </div>
 
+      {/* Badges Section */}
+      <div className="w-full flex justify-center gap-4 mb-8 overflow-x-auto py-2 scrollbar-hide">
+        {badges.map((badge, i) => (
+          <div 
+            key={i} 
+            className={`flex-shrink-0 flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${badge.active ? `bg-background border-primary/20 shadow-lg scale-110` : 'opacity-10 grayscale border-transparent'}`}
+            title={badge.label}
+          >
+            <badge.icon className={`w-6 h-6 ${badge.active ? badge.color : 'text-foreground'}`} />
+            <span className="text-[7px] font-black uppercase tracking-tighter">{badge.label}</span>
+          </div>
+        ))}
+      </div>
+
       <div className="w-full grid gap-8 md:grid-cols-3">
         
         {/* Left Column: Adventurer Stats */}
         <div className="md:col-span-1 space-y-6">
-          <div className="bg-foreground/5 border-2 border-primary/20 rounded-[2rem] p-6 shadow-lg">
-            <h3 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+          <div className="bg-foreground/5 border-2 border-primary/20 rounded-[2rem] p-6 shadow-lg relative overflow-hidden group">
+            <div className="absolute -right-4 -top-4 opacity-5 group-hover:rotate-12 transition-transform">
+              <Award className="w-24 h-24" />
+            </div>
+            <h3 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10">
               <Shield className="w-3 h-3 text-primary" /> Adventurer Stats
             </h3>
             
-            <div className="space-y-4">
+            <div className="space-y-4 relative z-10">
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] font-black opacity-40 uppercase tracking-tighter">Total Focus Time</span>
                 <div className="flex items-end gap-2 text-primary">
                   <Clock className="w-4 h-4 mb-1" />
-                  <span className="text-2xl font-black italic">{currentUser.totalFocusTime}</span>
+                  <span className="text-2xl font-black italic">{currentUser.totalFocusTime || 0}</span>
                   <span className="text-[10px] font-black mb-1.5 opacity-60">MINS</span>
                 </div>
               </div>
@@ -70,7 +97,7 @@ export default function ProfilePage() {
                 <span className="text-[10px] font-black opacity-40 uppercase tracking-tighter">Quests Completed</span>
                 <div className="flex items-end gap-2 text-primary">
                   <Swords className="w-4 h-4 mb-1" />
-                  <span className="text-2xl font-black italic">{currentUser.completedQuestsCount}</span>
+                  <span className="text-2xl font-black italic">{currentUser.completedQuestsCount || 0}</span>
                   <span className="text-[10px] font-black mb-1.5 opacity-60">TASKS</span>
                 </div>
               </div>
