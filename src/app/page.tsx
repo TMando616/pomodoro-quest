@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 // Lucide React からアイコンをインポート
 import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw } from 'lucide-react';
 // 型定義と定数をインポート
@@ -12,7 +13,6 @@ import { Sidebar } from '@/components/ui/Sidebar';
 import { AuthOverlay } from '@/components/ui/AuthOverlay';
 import { TimerDisplay } from '@/components/ui/TimerDisplay';
 import { QuestLogPanel } from '@/components/ui/QuestLogPanel';
-import { ProfilePanel } from '@/components/ui/ProfilePanel';
 
 // ロジックを管理するカスタムフックをインポート
 import { useAudio } from '@/hooks/useAudio';
@@ -28,7 +28,6 @@ export default function PomodoroQuest() {
   const [message, setMessage] = useState(""); // 画面中央に表示する通知メッセージ
   const [currentTheme, setCurrentTheme] = useState('emerald'); // 現在選択されているテーマ名
   const [isLogsOpen, setIsLogsOpen] = useState(false); // 履歴パネルが開いているか
-  const [isProfileOpen, setIsProfileOpen] = useState(false); // プロフィールパネルが開いているか
   const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none'); // 認証画面の状態
   const [authForm, setAuthForm] = useState({ username: '' }); // ログイン/登録フォームの入力値
   const [authError, setAuthError] = useState(""); // 認証エラーメッセージ
@@ -164,21 +163,12 @@ export default function PomodoroQuest() {
       {/* 履歴パネル（開いている時のみ表示） */}
       {isLogsOpen && <QuestLogPanel logs={userLogs} onClose={() => { playEffect('click'); setIsLogsOpen(false); }} />}
       
-      {/* プロフィールパネル（開いている時のみ表示） */}
-      {isProfileOpen && currentUser && (
-        <ProfilePanel 
-          user={currentUser} 
-          onClose={() => { playEffect('click'); setIsProfileOpen(false); }} 
-          onEquipTitle={(id) => { playEffect('click'); updateCurrentUserAndList({ ...currentUser, currentTitleId: id }); }}
-        />
-      )}
-
       <div className="w-full max-w-md flex flex-col items-center gap-10 md:gap-14 my-8">
         
         {/* 上部のステータスバー */}
-        <div className="w-full cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]" onClick={() => { if(currentUser) { playEffect('click'); setIsProfileOpen(true); } }}>
+        <Link href={currentUser ? "/profile" : "#"} className="w-full cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]" onClick={(e) => { if(!currentUser) { e.preventDefault(); playEffect('click'); setIsAuthMode('login'); } else { playEffect('click'); } }}>
           <HUD user={currentUser} currentTitle={currentTitleName} />
-        </div>
+        </Link>
 
         {/* 認証オーバーレイ、またはタイマーUI */}
         {isAuthMode !== 'none' ? (
