@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useUser } from '@/hooks/useUser';
 import { useAudio } from '@/hooks/useAudio';
 import { useGuild } from '@/hooks/useGuild';
+import { User } from '@/types';
 
 /**
  * 管理者専用ダッシュボードページ
@@ -14,20 +15,21 @@ export default function AdminPage() {
   const { users, currentUser, adminDeleteUser, adminUpdateUser } = useUser();
   const { guildInfo, updateGlobalMessage, updateDailyQuest } = useGuild();
   const { playEffect } = useAudio();
-  const [error, setError] = useState("");
   
   const [newGlobalMsg, setNewGlobalMsg] = useState(guildInfo.globalMessage);
   const [dqTitle, setDqTitle] = useState(guildInfo.dailyQuest.title);
   const [dqReq, setDqReq] = useState(guildInfo.dailyQuest.requirement);
   const [dqReward, setDqReward] = useState(guildInfo.dailyQuest.rewardTitle);
 
-  // アクセス制限
+  // アクセス制限：管理者でない場合は警告を表示
   if (!currentUser || currentUser.role !== 'admin') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
         <h1 className="text-xl font-black uppercase tracking-widest text-red-500">Access Denied</h1>
-        <Link href="/" className="mt-8 text-[10px] font-black uppercase border-b border-primary text-primary pb-1">Return to Quest</Link>
+        <Link href="/" className="mt-8 text-[10px] font-black uppercase border-b border-primary text-primary pb-1">
+          Return to Quest
+        </Link>
       </div>
     );
   }
@@ -36,15 +38,27 @@ export default function AdminPage() {
     playEffect('click');
     const result = adminDeleteUser(id);
     if (!result.success && result.error) {
-      setError(result.error);
-      setTimeout(() => setError(""), 3000);
+      alert(result.error);
     }
   };
 
-  const toggleRole = (user: any) => {
+  const toggleRole = (user: User) => {
     playEffect('click');
     const newRole = user.role === 'admin' ? 'user' : 'admin';
     adminUpdateUser({ ...user, role: newRole });
+  };
+
+  const resetStats = (user: User) => {
+    playEffect('click');
+    if (confirm(`Reset stats for ${user.username}?`)) {
+      adminUpdateUser({ ...user, level: 1, exp: 0, totalFocusTime: 0, completedQuestsCount: 0 });
+    }
+  };
+
+  const handleBroadcast = () => {
+    playEffect('click');
+    updateGlobalMessage(newGlobalMsg);
+    alert("Message broadcasted to all guild members!");
   };
 
   return (
@@ -77,7 +91,7 @@ export default function AdminPage() {
             className="flex-1 bg-background/50 border border-red-500/20 rounded-2xl p-4 text-xs focus:outline-none focus:border-red-500/50 transition-all resize-none min-h-[100px] mb-4"
           />
           <button 
-            onClick={() => { playEffect('click'); updateGlobalMessage(newGlobalMsg); alert("Broadcasted!"); }}
+            onClick={handleBroadcast}
             className="w-full bg-red-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl shadow-lg hover:bg-red-500 transition-all flex items-center justify-center gap-2"
           >
             <Send className="w-4 h-4" /> Broadcast
@@ -147,12 +161,28 @@ export default function AdminPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <button onClick={() => toggleRole(user)} disabled={user.id === currentUser.id} className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${user.role === 'admin' ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'bg-primary/20 text-primary border border-primary/30'} ${user.id !== currentUser.id ? 'hover:scale-110 active:scale-95' : 'opacity-50'}`}>{user.role}</button>
+                    <button 
+                      onClick={() => toggleRole(user)} 
+                      disabled={user.id === currentUser.id} 
+                      className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${
+                        user.role === 'admin' ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'bg-primary/20 text-primary border border-primary/30'
+                      } ${user.id !== currentUser.id ? 'hover:scale-110 active:scale-95' : 'opacity-50'}`}
+                    >
+                      {user.role}
+                    </button>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => { playEffect('click'); if(confirm('Reset?')) adminUpdateUser({...user, level:1, exp:0, totalFocusTime:0, completedQuestsCount:0}); }} className="p-2 text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all"><RefreshCw className="w-4 h-4" /></button>
-                      <button onClick={() => handleDelete(user.id)} disabled={user.id === currentUser.id} className={`p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all ${user.id === currentUser.id ? 'opacity-20' : ''}`}><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => resetStats(user)} className="p-2 text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all">
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(user.id)} 
+                        disabled={user.id === currentUser.id} 
+                        className={`p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all ${user.id === currentUser.id ? 'opacity-20' : ''}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -160,6 +190,14 @@ export default function AdminPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="mt-12 flex items-center gap-4 opacity-20">
+        <Users className="w-6 h-6" />
+        <div className="h-px w-20 bg-foreground" />
+        <Shield className="w-6 h-6" />
+        <div className="h-px w-20 bg-foreground" />
+        <Users className="w-6 h-6" />
       </div>
     </div>
   );
