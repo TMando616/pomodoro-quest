@@ -1,18 +1,21 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Shield, Users, Trash2, UserPlus, AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Shield, Users, Trash2, AlertCircle, ArrowLeft, RefreshCw, MessageSquare, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from '@/hooks/useUser';
 import { useAudio } from '@/hooks/useAudio';
+import { useGuild } from '@/hooks/useGuild';
 
 /**
  * 管理者専用ダッシュボードページ
  */
 export default function AdminPage() {
   const { users, currentUser, adminDeleteUser, adminUpdateUser } = useUser();
+  const { guildInfo, updateGlobalMessage } = useGuild();
   const { playEffect } = useAudio();
   const [error, setError] = useState("");
+  const [newGlobalMsg, setNewGlobalMsg] = useState(guildInfo.globalMessage);
 
   // アクセス制限：管理者でない場合は警告を表示
   if (!currentUser || currentUser.role !== 'admin') {
@@ -52,6 +55,12 @@ export default function AdminPage() {
     }
   };
 
+  const handleBroadcast = () => {
+    playEffect('click');
+    updateGlobalMessage(newGlobalMsg);
+    alert("Message broadcasted to all guild members!");
+  };
+
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 md:p-8 pt-8 max-w-5xl mx-auto animate-in fade-in duration-500 pb-24">
       
@@ -75,6 +84,27 @@ export default function AdminPage() {
           <span className="text-xs font-black uppercase tracking-widest">{error}</span>
         </div>
       )}
+
+      {/* Global Guild Message Editor */}
+      <div className="w-full bg-foreground/5 border-2 border-red-500/20 rounded-[2.5rem] p-6 mb-8 shadow-lg">
+        <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-red-400">
+          <MessageSquare className="w-3 h-3" /> Broadcaster (Global Guild Message)
+        </h3>
+        <div className="flex flex-col md:flex-row gap-4">
+          <textarea 
+            value={newGlobalMsg}
+            onChange={(e) => setNewGlobalMsg(e.target.value)}
+            placeholder="Announce something to all guild members..."
+            className="flex-1 bg-background/50 border border-red-500/20 rounded-2xl p-4 text-xs focus:outline-none focus:border-red-500/50 transition-all resize-none min-h-[80px]"
+          />
+          <button 
+            onClick={handleBroadcast}
+            className="md:w-32 bg-red-600 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-lg hover:bg-red-500 active:scale-95 transition-all flex items-center justify-center gap-2 px-4 py-4 md:py-0"
+          >
+            <Send className="w-4 h-4" /> Broadcast
+          </button>
+        </div>
+      </div>
 
       <div className="w-full overflow-x-auto">
         <div className="min-w-[800px] bg-foreground/5 border-2 border-primary/10 rounded-[2.5rem] overflow-hidden shadow-2xl">
