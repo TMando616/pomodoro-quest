@@ -34,6 +34,18 @@ export type QuestLog = {
 };
 
 /**
+ * 日々の振り返り（冒険日誌）の記録を表す型
+ */
+export type JournalEntry = {
+  id: string;          // 日誌ID
+  userId: string;      // 記録したユーザーのID
+  questLogId?: string; // 関連するクエスト履歴のID（任意）
+  content: string;     // 日誌の内容
+  mood: 'great' | 'good' | 'tired' | 'bad'; // その時の気分
+  createdAt: number;   // 記録した日時
+};
+
+/**
  * テーマのカテゴリ（ダーク/ライト）
  */
 export type ThemeCategory = 'dark' | 'light';
