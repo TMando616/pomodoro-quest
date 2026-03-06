@@ -1,8 +1,9 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 // Lucide React からアイコンをインポート
-import { Moon, Sun, LogIn, LogOut, ScrollText, Volume2, VolumeX } from 'lucide-react';
+import { Moon, Sun, LogIn, LogOut, ScrollText, Volume2, VolumeX, Shield } from 'lucide-react';
 // 型定義と定数をインポート
 import { ThemeCategory, User } from '@/types';
 import { themes, durationOptions } from '@/constants';
@@ -37,6 +38,17 @@ export function Sidebar({
       
       {/* ログイン・履歴・サウンド設定のトップボタン群 */}
       <div className="flex flex-col items-end gap-2">
+        {/* 管理者専用ボタン */}
+        {currentUser?.role === 'admin' && (
+          <Link 
+            href="/admin"
+            className="flex items-center gap-2 px-4 py-2 bg-red-950/30 border border-red-500/30 rounded-xl hover:bg-red-900/40 transition-all text-[10px] font-black uppercase tracking-widest text-red-400 group mb-1"
+          >
+            <Shield className="w-3 h-3 group-hover:scale-110 transition-transform" />
+            Admin Council
+          </Link>
+        )}
+
         <div className="flex gap-2">
           {/* サウンドON/OFF切り替えボタン */}
           <button 
