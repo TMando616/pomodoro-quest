@@ -7,6 +7,7 @@ export type AppSettings = {
   showNotifications: boolean;
   autoStartRest: boolean;
   compactHUD: boolean;
+  theme: string;
 };
 
 /**
@@ -19,6 +20,7 @@ export function useSettings() {
       showNotifications: true,
       autoStartRest: false,
       compactHUD: false,
+      theme: 'emerald',
     };
     if (typeof window === 'undefined') return defaultSettings;
     const saved = localStorage.getItem('pq_settings');

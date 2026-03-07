@@ -19,15 +19,15 @@ import { useAudio } from '@/hooks/useAudio';
 import { useUser } from '@/hooks/useUser';
 import { useTimer, Difficulty } from '@/hooks/useTimer';
 import { useGuild } from '@/hooks/useGuild';
+import { useSettings } from '@/hooks/useSettings';
 
 /**
  * メインのアプリケーションコンポーネント
  * ポモドーロタイマーとRPG要素を組み合わせたメイン画面を提供します。
  */
 export default function PomodoroQuest() {
-  // --- UI表示用の状態管理 ---
+  const { settings, updateSettings } = useSettings();
   const [message, setMessage] = useState(""); // 画面中央に表示する通知メッセージ
-  const [currentTheme, setCurrentTheme] = useState('emerald'); // 現在選択されているテーマ名
   const [isLogsOpen, setIsLogsOpen] = useState(false); // 履歴パネルが開いているか
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // サイドバーが開いているか
   const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none'); // 認証画面の状態
@@ -129,12 +129,14 @@ export default function PomodoroQuest() {
   // タイマーのロジックを管理するカスタムフック
   const timer = useTimer({ onComplete: handleComplete });
 
-  // テーマカラーの適用（CSS変数を書き換える）
+  // テーマカラーの適用（ボスモード時は強制的に赤色テーマにする。通常時は ThemeProvider が管理）
   useEffect(() => { 
-    // ボス戦中かつタイマー動作中なら強制的に赤色テーマにする
-    const themeToApply = timer.isBossMode && timer.isActive ? 'ruby' : currentTheme;
-    document.documentElement.setAttribute('data-theme', themeToApply); 
-  }, [currentTheme, timer.isBossMode, timer.isActive]);
+    if (timer.isBossMode && timer.isActive) {
+      document.documentElement.setAttribute('data-theme', 'ruby'); 
+    } else {
+      document.documentElement.setAttribute('data-theme', settings.theme);
+    }
+  }, [settings.theme, timer.isBossMode, timer.isActive]);
 
   /**
    * 時間を MM:SS 形式に変換する
@@ -194,11 +196,12 @@ export default function PomodoroQuest() {
       <Sidebar 
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        currentUser={currentUser} currentTheme={currentTheme} duration={timer.duration} isActive={timer.isActive} isSoundOn={isSoundOn}
+        currentUser={currentUser} currentTheme={settings.theme} duration={timer.duration} isActive={timer.isActive} isSoundOn={isSoundOn}
         onLogout={() => { playEffect('click'); logout(); timer.setIsActive(false); setIsSidebarOpen(false); }}
-        onOpenAuth={() => { playEffect('click'); setIsAuthMode('login'); setIsSidebarOpen(false); }}
-        onThemeChange={(theme) => { playEffect('click'); setCurrentTheme(theme); }}
+        onOpenAuth={() => { playEffect('click'); setIsAuthMode('login'); setIsSidebarOpen(false); }}        
+        onThemeChange={(theme) => { playEffect('click'); updateSettings({ theme }); }}
         onDurationSelect={timer.selectDuration}
+
         onOpenLogs={() => { playEffect('click'); setIsLogsOpen(true); setIsSidebarOpen(false); }}
         onToggleSound={toggleSound}
       />
