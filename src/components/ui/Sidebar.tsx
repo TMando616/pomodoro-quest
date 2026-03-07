@@ -7,6 +7,7 @@ import { Moon, Sun, LogIn, LogOut, ScrollText, Volume2, VolumeX, Shield, X, Sett
 // 型定義と定数をインポート
 import { ThemeCategory, User } from '@/types';
 import { themes, durationOptions } from '@/constants';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * サイドバーコンポーネントのプロパティ（受け取るデータ）の定義
@@ -36,6 +37,7 @@ export function Sidebar({
   currentUser, currentTheme, duration, isActive, isSoundOn,
   onLogout, onOpenAuth, onThemeChange, onDurationSelect, onOpenLogs, onToggleSound
 }: SidebarProps) {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
@@ -53,7 +55,7 @@ export function Sidebar({
         <div className="flex justify-between items-center pb-4 border-b border-primary/10">
           <div className="flex items-center gap-2">
             <Settings2 className="w-4 h-4 text-primary" />
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">Quest Config</span>
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">{t.sidebar.title}</span>
           </div>
           <button 
             onClick={onClose}
@@ -66,14 +68,14 @@ export function Sidebar({
         {/* ログイン・履歴・サウンド設定 */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">System</span>
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{t.sidebar.system}</span>
             {/* サウンドON/OFF切り替えボタン */}
             <button 
               onClick={onToggleSound}
               className="p-2 bg-foreground/5 border border-primary/20 rounded-xl hover:bg-foreground/10 transition-all flex items-center gap-2 pr-4"
             >
               {isSoundOn ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4 opacity-40" />}
-              <span className="text-[10px] font-black uppercase tracking-widest">{isSoundOn ? 'Sound On' : 'Muted'}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">{isSoundOn ? t.sidebar.soundOn : t.sidebar.muted}</span>
             </button>
           </div>
 
@@ -84,17 +86,17 @@ export function Sidebar({
               className="flex items-center justify-center gap-2 w-full py-3 bg-foreground/5 border border-primary/20 rounded-xl hover:bg-foreground/10 transition-all text-[10px] font-black uppercase tracking-widest"
             >
               <ScrollText className="w-4 h-4" />
-              Adventure Log
+              {t.sidebar.adventureLog}
             </button>
 
             {/* ユーザーの状態（ログイン/ログアウト）に応じたボタンの表示 */}
             {currentUser ? (
               <button onClick={onLogout} className="flex items-center justify-center gap-2 w-full py-3 bg-foreground/5 border border-primary/20 rounded-xl hover:bg-foreground/10 transition-all text-[10px] font-black uppercase tracking-widest">
-                <LogOut className="w-4 h-4" /> Sign Out
+                <LogOut className="w-4 h-4" /> {t.common.signOut}
               </button>
             ) : (
               <button onClick={() => { onOpenAuth(); onClose(); }} className="flex items-center justify-center gap-2 w-full py-3 bg-primary text-primary-foreground rounded-xl shadow-[0_0_15px_var(--color-primary-glow)] hover:scale-[1.02] active:scale-95 transition-all text-[10px] font-black uppercase tracking-widest">
-                <LogIn className="w-4 h-4" /> Adventurer Log
+                <LogIn className="w-4 h-4" /> {t.common.signIn}
               </button>
             )}
 
@@ -105,7 +107,7 @@ export function Sidebar({
                 className="flex items-center justify-center gap-2 w-full py-2 bg-red-950/30 border border-red-500/30 rounded-xl hover:bg-red-900/40 transition-all text-[10px] font-black uppercase tracking-widest text-red-400 group mt-2"
               >
                 <Shield className="w-3 h-3 group-hover:scale-110 transition-transform" />
-                Admin Council
+                {t.common.admin}
               </Link>
             )}
           </div>
@@ -113,14 +115,14 @@ export function Sidebar({
 
         {/* テーマセレクター（Shadow / Radiance） */}
         <div className="flex flex-col gap-4">
-          <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Affinity (Theme)</span>
+          <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{t.sidebar.affinity}</span>
           <div className="space-y-4">
             {(['dark', 'light'] as ThemeCategory[]).map((cat) => (
               <div key={cat} className="space-y-2">
                 {/* カテゴリラベル（月/太陽アイコン） */}
                 <div className="flex items-center gap-2">
                   {cat === 'dark' ? <Moon className="w-3 h-3 text-primary" /> : <Sun className="w-3 h-3 text-primary" />}
-                  <span className="text-[9px] font-black uppercase tracking-widest text-primary/80">{cat === 'dark' ? 'Shadow' : 'Radiance'}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-primary/80">{cat === 'dark' ? t.sidebar.shadow : t.sidebar.radiance}</span>
                 </div>
                 {/* 各色のテーマボタン */}
                 <div className={`flex gap-2 p-2 border border-primary/20 rounded-2xl ${cat === 'dark' ? 'bg-slate-900/40' : 'bg-white/40'}`}>
@@ -143,7 +145,7 @@ export function Sidebar({
         {/* クエスト時間セレクター（5分〜60分のグリッド） */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Quest Duration</span>
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{t.sidebar.duration}</span>
             <span className="text-[10px] font-black text-primary">{duration}m</span>
           </div>
           <div className="grid grid-cols-3 gap-2 p-2 bg-background/40 border border-primary/20 rounded-2xl">

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, User, BookOpen, Users, Settings } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * アプリケーション全体のナビゲーションバー
@@ -11,13 +12,14 @@ import { Home, User, BookOpen, Users, Settings } from 'lucide-react';
  */
 export function Navbar() {
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   const navItems = [
-    { href: '/', label: 'Quest', icon: Home },
-    { href: '/journal', label: 'Journal', icon: BookOpen },
-    { href: '/guild', label: 'Guild', icon: Users },
-    { href: '/profile', label: 'Profile', icon: User },
-    { href: '/settings', label: 'Settings', icon: Settings },
+    { href: '/', label: t.navbar.quest, icon: Home },
+    { href: '/journal', label: t.navbar.journal, icon: BookOpen },
+    { href: '/guild', label: t.navbar.guild, icon: Users },
+    { href: '/profile', label: t.navbar.profile, icon: User },
+    { href: '/settings', label: t.navbar.settings, icon: Settings },
   ];
 
   return (

@@ -3,6 +3,7 @@
 import React from 'react';
 // Lucide React からアイコンをインポート
 import { Swords, Coffee } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * タイマー表示コンポーネントのプロパティ定義
@@ -21,8 +22,10 @@ type TimerDisplayProps = {
  * 残り時間、プログレスバー（円周）、メッセージを表示します。
  */
 export function TimerDisplay({ timeLeft, duration, isActive, message, formatTime, questName }: TimerDisplayProps) {
+  const { t } = useTranslation();
+  
   // 休憩中かどうかを判定
-  const isRest = questName === "Resting at Inn";
+  const isRest = questName === t.timer.restingAtInn;
 
   return (
     <div className="relative flex flex-col items-center">
@@ -41,7 +44,7 @@ export function TimerDisplay({ timeLeft, duration, isActive, message, formatTime
             <Swords className={`w-4 h-4 ${isActive ? 'text-primary animate-pulse' : 'opacity-20'}`} />
           )}
           <span className={`text-[9px] font-black uppercase tracking-[0.4em] ${isActive ? 'text-primary' : 'opacity-20'}`}>
-            {isActive && questName ? questName : (isRest ? "Resting..." : "Focus Quest")}
+            {isActive && questName ? questName : (isRest ? t.common.rest : t.common.quest)}
           </span>
         </div>
 

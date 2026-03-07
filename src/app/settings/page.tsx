@@ -4,6 +4,7 @@ import React from 'react';
 import { Settings, Clock, Monitor, Shield, Trash2, CheckCircle2 } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useAudio } from '@/hooks/useAudio';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * 設定ページ
@@ -11,6 +12,7 @@ import { useAudio } from '@/hooks/useAudio';
 export default function SettingsPage() {
   const { settings, updateSettings } = useSettings();
   const { playEffect } = useAudio();
+  const { t } = useTranslation();
 
   const handleToggle = (key: keyof typeof settings) => {
     playEffect('click');
@@ -18,7 +20,7 @@ export default function SettingsPage() {
   };
 
   const clearData = () => {
-    if (confirm("Are you sure? All your progress, levels, and logs will be lost forever.")) {
+    if (confirm(t.settings.confirmReset)) {
       localStorage.clear();
       window.location.href = "/";
     }
@@ -31,8 +33,8 @@ export default function SettingsPage() {
       <div className="w-full flex items-center gap-3 mb-8 pb-4 border-b-2 border-primary/20">
         <Settings className="w-8 h-8 text-primary" />
         <div>
-          <h1 className="text-2xl font-black uppercase tracking-[0.2em] text-primary">System Settings</h1>
-          <p className="text-[10px] opacity-60 uppercase tracking-widest">Configure your adventure experience</p>
+          <h1 className="text-2xl font-black uppercase tracking-[0.2em] text-primary">{t.settings.title}</h1>
+          <p className="text-[10px] opacity-60 uppercase tracking-widest">{t.settings.subtitle}</p>
         </div>
       </div>
 
@@ -41,14 +43,14 @@ export default function SettingsPage() {
         {/* Timer Settings */}
         <section className="bg-foreground/5 border-2 border-primary/10 rounded-[2rem] p-6 shadow-lg">
           <h3 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-2">
-            <Clock className="w-3 h-3 text-primary" /> Quest Configuration
+            <Clock className="w-3 h-3 text-primary" /> {t.settings.questConfig}
           </h3>
           
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest">Default Quest Duration</p>
-                <p className="text-[8px] opacity-40 uppercase">Initial time for new quests</p>
+                <p className="text-[10px] font-black uppercase tracking-widest">{t.settings.defaultDuration}</p>
+                <p className="text-[8px] opacity-40 uppercase">{t.settings.defaultDurationDesc}</p>
               </div>
               <div className="flex bg-background/50 rounded-xl p-1 border border-primary/10">
                 {[25, 45, 60].map(val => (
@@ -65,8 +67,8 @@ export default function SettingsPage() {
 
             <div className="flex justify-between items-center pt-4 border-t border-primary/5">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest">Auto-Start Rest</p>
-                <p className="text-[8px] opacity-40 uppercase">Immediately rest after a quest</p>
+                <p className="text-[10px] font-black uppercase tracking-widest">{t.settings.autoStartRest}</p>
+                <p className="text-[8px] opacity-40 uppercase">{t.settings.autoStartRestDesc}</p>
               </div>
               <button 
                 onClick={() => handleToggle('autoStartRest')}
@@ -81,14 +83,33 @@ export default function SettingsPage() {
         {/* System Settings */}
         <section className="bg-foreground/5 border-2 border-primary/10 rounded-[2rem] p-6 shadow-lg">
           <h3 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-2">
-            <Monitor className="w-3 h-3 text-primary" /> Interface & HUD
+            <Monitor className="w-3 h-3 text-primary" /> {t.settings.interface}
           </h3>
           
           <div className="space-y-4">
+            {/* Language Setting */}
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest">System Notifications</p>
-                <p className="text-[8px] opacity-40 uppercase">Show desktop alerts when complete</p>
+                <p className="text-[10px] font-black uppercase tracking-widest">{t.settings.language}</p>
+                <p className="text-[8px] opacity-40 uppercase">{t.settings.languageDesc}</p>
+              </div>
+              <div className="flex bg-background/50 rounded-xl p-1 border border-primary/10">
+                {(['en', 'ja'] as const).map(lang => (
+                  <button
+                    key={lang}
+                    onClick={() => { playEffect('click'); updateSettings({ language: lang }); }}
+                    className={`px-3 py-1 rounded-lg text-[9px] font-black transition-all ${settings.language === lang ? 'bg-primary text-primary-foreground shadow-md' : 'opacity-40 hover:opacity-100'}`}
+                  >
+                    {lang.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-4 border-t border-primary/5">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest">{t.settings.notifications}</p>
+                <p className="text-[8px] opacity-40 uppercase">{t.settings.notificationsDesc}</p>
               </div>
               <button 
                 onClick={() => handleToggle('showNotifications')}
@@ -100,8 +121,8 @@ export default function SettingsPage() {
 
             <div className="flex justify-between items-center pt-4 border-t border-primary/5">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest">Compact Mode</p>
-                <p className="text-[8px] opacity-40 uppercase">Minimize HUD size for focus</p>
+                <p className="text-[10px] font-black uppercase tracking-widest">{t.settings.compactHUD}</p>
+                <p className="text-[8px] opacity-40 uppercase">{t.settings.compactHUDDesc}</p>
               </div>
               <button 
                 onClick={() => handleToggle('compactHUD')}
@@ -116,7 +137,7 @@ export default function SettingsPage() {
         {/* Danger Zone */}
         <section className="bg-red-950/10 border-2 border-red-500/20 rounded-[2rem] p-6 shadow-lg">
           <h3 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-2 text-red-500">
-            <Shield className="w-3 h-3" /> Danger Zone
+            <Shield className="w-3 h-3" /> {t.settings.dangerZone}
           </h3>
           
           <div className="space-y-4">
@@ -125,8 +146,8 @@ export default function SettingsPage() {
               className="w-full flex items-center justify-between p-4 bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 rounded-2xl transition-all group"
             >
               <div className="text-left">
-                <p className="text-[10px] font-black uppercase tracking-widest text-red-500">Obliterate All Data</p>
-                <p className="text-[8px] text-red-400/60 uppercase">Reset everything to zero</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-red-500">{t.settings.obliterateData}</p>
+                <p className="text-[8px] text-red-400/60 uppercase">{t.settings.obliterateDataDesc}</p>
               </div>
               <Trash2 className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
             </button>
@@ -137,7 +158,7 @@ export default function SettingsPage() {
 
       {/* Save Success Indicator */}
       <div className="mt-8 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">
-        <CheckCircle2 className="w-3 h-3" /> Settings synchronized with Guild scrolls
+        <CheckCircle2 className="w-3 h-3" /> {t.settings.syncSuccess}
       </div>
 
     </div>

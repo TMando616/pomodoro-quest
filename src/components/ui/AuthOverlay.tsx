@@ -1,83 +1,71 @@
 "use client";
 
 import React from 'react';
-// Lucide React からアイコンをインポート
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, X, ShieldCheck } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
-/**
- * 認証オーバーレイのプロパティ定義
- */
 type AuthOverlayProps = {
-  isAuthMode: 'login' | 'register'; // ログインか登録か
-  authForm: { username: string };   // フォームの入力状態
-  authError: string;                // エラーメッセージ
-  onFormChange: (username: string) => void; // 入力内容が変わった時の処理
-  onSubmit: (e: React.FormEvent) => void;   // 送信（ログイン/登録）ボタンが押された時の処理
-  onToggleMode: () => void;                 // ログインと登録を切り替える処理
-  onCancel: () => void;                     // キャンセル（閉じる）処理
+  isAuthMode: 'login' | 'register';
+  authForm: { username: string };
+  authError: string;
+  onFormChange: (username: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onToggleMode: () => void;
+  onCancel: () => void;
 };
 
-/**
- * ユーザー登録やログインを行うための画面オーバーレイ
- * RPGの「ギルドへの加入」や「冒険の記録の再開」をイメージしたデザインです。
- */
-export function AuthOverlay({ isAuthMode, authForm, authError, onFormChange, onSubmit, onToggleMode, onCancel }: AuthOverlayProps) {
+export function AuthOverlay({
+  isAuthMode, authForm, authError, onFormChange, onSubmit, onToggleMode, onCancel
+}: AuthOverlayProps) {
+  const { t } = useTranslation();
+
   return (
-    // フェードイン・ズームインしながら表示
-    <div className="relative z-20 w-full animate-in fade-in zoom-in duration-300">
-      {/* カード型のコンテナ：背景ぼかしとテーマカラーの光彩 */}
-      <div className="bg-background/80 border-4 border-primary rounded-[2.5rem] p-8 backdrop-blur-xl shadow-[0_0_50px_var(--color-primary-glow)]">
-        <div className="flex flex-col items-center gap-6">
-          {/* タイトルと説明文 */}
-          <div className="text-center">
-            <h2 className="text-2xl font-black uppercase tracking-[0.2em] text-primary mb-2">
-              {isAuthMode === 'login' ? 'Adventurer Log' : 'Join the Guild'}
-            </h2>
-            <p className="text-[10px] opacity-60 uppercase tracking-widest">
-              {isAuthMode === 'login' ? 'Continue your epic journey' : 'Start your focus adventure'}
-            </p>
+    <div className="w-full max-w-sm animate-in fade-in zoom-in duration-500">
+      <div className="bg-background/80 border-2 border-primary/20 rounded-[2.5rem] p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden group">
+        {/* 装飾用の光彩 */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors" />
+        
+        <div className="relative z-10">
+          <div className="flex justify-between items-start mb-8">
+            <div className="p-3 bg-primary/10 rounded-2xl border border-primary/20">
+              {isAuthMode === 'login' ? <ShieldCheck className="w-6 h-6 text-primary" /> : <UserPlus className="w-6 h-6 text-primary" />}
+            </div>
+            <button onClick={onCancel} className="p-2 hover:bg-foreground/5 rounded-full transition-all">
+              <X className="w-5 h-5 opacity-30 hover:opacity-100" />
+            </button>
           </div>
 
-          {/* 入力フォーム */}
-          <form onSubmit={onSubmit} className="w-full space-y-4">
+          <h2 className="text-xl font-black uppercase tracking-widest mb-2 text-primary">
+            {isAuthMode === 'login' ? t.auth.login : t.auth.register}
+          </h2>
+          <p className="text-[10px] opacity-50 font-bold uppercase tracking-widest mb-8 leading-relaxed">
+            {isAuthMode === 'login' ? t.auth.enterName : t.auth.welcome}
+          </p>
+
+          <form onSubmit={onSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest px-1">Adventurer Name</label>
-              <input 
-                type="text" 
-                placeholder="Enter your name..."
+              <input
+                type="text"
+                placeholder={t.auth.namePlaceholder}
                 value={authForm.username}
                 onChange={(e) => onFormChange(e.target.value)}
-                className="w-full bg-foreground/5 border-2 border-primary/20 rounded-2xl px-5 py-4 focus:border-primary focus:outline-none transition-all font-bold placeholder:opacity-30"
+                autoFocus
+                className="w-full bg-foreground/5 border-2 border-primary/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-primary/50 transition-all font-bold placeholder:opacity-30"
               />
+              {authError && <p className="text-[10px] text-red-500 font-black uppercase tracking-widest pl-2">{authError}</p>}
             </div>
-            {/* エラーメッセージの表示（名前が重複している場合など） */}
-            {authError && <p className="text-[10px] text-red-500 font-bold px-1">{authError}</p>}
-            
-            {/* 送信ボタン */}
-            <button 
-              type="submit"
-              className="w-full bg-primary text-primary-foreground font-black uppercase tracking-[0.2em] py-5 rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3"
-            >
-              {isAuthMode === 'login' ? <LogIn className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
-              {isAuthMode === 'login' ? 'Enter Guild' : 'Register Hero'}
+
+            <button type="submit" className="w-full bg-primary text-primary-foreground rounded-2xl py-4 font-black uppercase tracking-[0.2em] shadow-[0_0_20px_var(--color-primary-glow)] hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 group">
+              {isAuthMode === 'login' ? <LogIn className="w-4 h-4 group-hover:translate-x-1 transition-transform" /> : <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />}
+              {isAuthMode === 'login' ? t.auth.login : t.auth.startAdventure}
             </button>
           </form>
 
-          {/* モード切り替えリンク（ログイン ↔ 登録） */}
-          <button 
-            onClick={onToggleMode}
-            className="text-[10px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity"
-          >
-            {isAuthMode === 'login' ? "Need a new scroll? Register here" : "Already in the guild? Sign in"}
-          </button>
-          
-          {/* キャンセルボタン */}
-          <button 
-            onClick={onCancel}
-            className="text-[10px] font-black uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity"
-          >
-            Cancel
-          </button>
+          <div className="mt-8 pt-6 border-t border-primary/10 text-center">
+            <button onClick={onToggleMode} className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 hover:text-primary transition-all">
+              {isAuthMode === 'login' ? t.auth.createNewAccount : t.auth.alreadyMember}
+            </button>
+          </div>
         </div>
       </div>
     </div>

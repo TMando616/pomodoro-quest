@@ -20,6 +20,7 @@ import { useUser } from '@/hooks/useUser';
 import { useTimer, Difficulty } from '@/hooks/useTimer';
 import { useGuild } from '@/hooks/useGuild';
 import { useSettings } from '@/hooks/useSettings';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * メインのアプリケーションコンポーネント
@@ -27,6 +28,7 @@ import { useSettings } from '@/hooks/useSettings';
  */
 export default function PomodoroQuest() {
   const { settings, updateSettings } = useSettings();
+  const { t } = useTranslation();
   const [message, setMessage] = useState(""); // 画面中央に表示する通知メッセージ
   const [isLogsOpen, setIsLogsOpen] = useState(false); // 履歴パネルが開いているか
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // サイドバーが開いているか
@@ -58,7 +60,7 @@ export default function PomodoroQuest() {
       if (isBoss) earnedExp *= 2;
 
       // 履歴データの作成
-      const displayName = isBoss ? `BOSS: ${qName || "Unknown"}` : (qName || "Quest");
+      const displayName = isBoss ? `BOSS: ${qName || t.timer.ancientEvil}` : (qName || t.common.quest);
       const newLog: QuestLog = { 
         id: Date.now().toString(), 
         userId: currentUser?.id || 'guest', 
@@ -80,10 +82,10 @@ export default function PomodoroQuest() {
         if (newExp >= 1000) { 
           newLevel += 1; 
           finalExp = newExp - 1000; 
-          setMessage(`LEVEL UP! ${displayName} DEFEATED! +${earnedExp} EXP`); 
+          setMessage(t.timer.levelUp.replace('{name}', displayName).replace('{exp}', earnedExp.toString())); 
           setTimeout(() => playEffect('level-up'), 500); // 少し遅れてレベルアップ音
         } else { 
-          setMessage(`${displayName} DEFEATED! +${earnedExp} EXP`); 
+          setMessage(t.timer.defeated.replace('{name}', displayName).replace('{exp}', earnedExp.toString())); 
         }
 
         // デイリーチャレンジ達成チェック
@@ -94,7 +96,7 @@ export default function PomodoroQuest() {
         
         if (todayTime >= guildInfo.dailyQuest.requirement && todayTime - duration < guildInfo.dailyQuest.requirement) {
           setTimeout(() => {
-            setMessage(`DAILY CHALLENGE COMPLETE: ${guildInfo.dailyQuest.title}!`);
+            setMessage(t.timer.dailyChallengeComplete.replace('{title}', guildInfo.dailyQuest.title));
             playEffect('level-up');
           }, 2000);
         }
@@ -115,16 +117,16 @@ export default function PomodoroQuest() {
         );
       } else {
         // 未ログインの場合のメッセージ
-        setMessage(`${displayName} CLEAR! +${earnedExp} EXP (Sign in to save)`);
+        setMessage(t.timer.questClear.replace('{name}', displayName).replace('{exp}', earnedExp.toString()));
       }
     } else {
       // 休憩完了時
-      setMessage("REST COMPLETE!");
+      setMessage(t.timer.restComplete);
     }
     
     // 5秒後にメッセージを消す
     setTimeout(() => setMessage(""), 5000);
-  }, [currentUser, playEffect, addQuestLog, updateCurrentUserAndList, checkNewTitles, questLogs, guildInfo]);
+  }, [currentUser, playEffect, addQuestLog, updateCurrentUserAndList, checkNewTitles, questLogs, guildInfo, t]);
 
   // タイマーのロジックを管理するカスタムフック
   const timer = useTimer({ onComplete: handleComplete });
@@ -153,7 +155,7 @@ export default function PomodoroQuest() {
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
-    if (!authForm.username.trim()) return setAuthError("Enter name.");
+    if (!authForm.username.trim()) return setAuthError(t.auth.errorEnterName);
 
     // フック経由でログイン/登録を実行
     const result = isAuthMode === 'register' ? register(authForm.username) : login(authForm.username);
@@ -188,7 +190,7 @@ export default function PomodoroQuest() {
           className="group flex items-center gap-2 p-3 bg-background/40 border-2 border-primary/20 rounded-2xl hover:bg-primary/10 hover:border-primary/40 transition-all shadow-lg backdrop-blur-md"
         >
           <Settings2 className="w-5 h-5 text-primary group-hover:rotate-90 transition-transform duration-500" />
-          <span className="text-[10px] font-black uppercase tracking-widest pr-1 hidden md:inline">Config</span>
+          <span className="text-[10px] font-black uppercase tracking-widest pr-1 hidden md:inline">{t.common.config}</span>
         </button>
       </div>
 
@@ -257,39 +259,39 @@ export default function PomodoroQuest() {
               {!timer.isActive && (
                 <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-500">
                   <div className="flex justify-center gap-4">
-                    <button onClick={() => { playEffect('click'); timer.setQuestMode(); }} className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${timer.mode === 'quest' ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 opacity-40 hover:opacity-100'}`}><Zap className="w-3 h-3" /> Quest</button>
-                    <button onClick={() => { playEffect('click'); timer.setRestTime(5); }} className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${timer.mode === 'rest' ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 opacity-40 hover:opacity-100'}`}><Coffee className="w-3 h-3" /> Rest</button>
+                    <button onClick={() => { playEffect('click'); timer.setQuestMode(); }} className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${timer.mode === 'quest' ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 opacity-40 hover:opacity-100'}`}><Zap className="w-3 h-3" /> {t.common.quest}</button>
+                    <button onClick={() => { playEffect('click'); timer.setRestTime(5); }} className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${timer.mode === 'rest' ? 'border-primary bg-primary/10 text-primary' : 'border-foreground/10 opacity-40 hover:opacity-100'}`}><Coffee className="w-3 h-3" /> {t.common.rest}</button>
                   </div>
                   {timer.mode === 'quest' && (
                     <div className="flex flex-col items-center gap-3 w-full">
                       <div className="flex gap-1.5 p-1 bg-foreground/5 rounded-xl border border-primary/10">
                         {(['easy', 'normal', 'hard', 'insane'] as Difficulty[]).map(d => (
-                          <button key={d} onClick={() => { playEffect('click'); timer.setDifficulty(d); }} className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase transition-all ${timer.difficulty === d ? 'bg-primary text-primary-foreground shadow-md' : 'opacity-40 hover:opacity-100'}`}>{d}</button>
+                          <button key={d} onClick={() => { playEffect('click'); timer.setDifficulty(d); }} className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase transition-all ${timer.difficulty === d ? 'bg-primary text-primary-foreground shadow-md' : 'opacity-40 hover:opacity-100'}`}>{t.timer[d]}</button>
                         ))}
                       </div>
-                      <button onClick={() => { playEffect('click'); timer.setIsBossMode(!timer.isBossMode); }} className={`flex items-center gap-2 px-6 py-2 rounded-full border-2 transition-all font-black text-[10px] uppercase tracking-widest ${timer.isBossMode ? 'bg-red-600 border-red-400 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'bg-foreground/5 border-foreground/10 opacity-40 hover:opacity-100'}`}><Skull className={`w-4 h-4 ${timer.isBossMode ? 'animate-pulse' : ''}`} /> Boss Battle Mode {timer.isBossMode ? 'ON' : 'OFF'}</button>
+                      <button onClick={() => { playEffect('click'); timer.setIsBossMode(!timer.isBossMode); }} className={`flex items-center gap-2 px-6 py-2 rounded-full border-2 transition-all font-black text-[10px] uppercase tracking-widest ${timer.isBossMode ? 'bg-red-600 border-red-400 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'bg-foreground/5 border-foreground/10 opacity-40 hover:opacity-100'}`}><Skull className={`w-4 h-4 ${timer.isBossMode ? 'animate-pulse' : ''}`} /> {t.timer.bossMode} {timer.isBossMode ? t.timer.bossModeOn : t.timer.bossModeOff}</button>
                     </div>
                   )}
                 </div>
               )}
-              {!timer.isActive && timer.mode === 'quest' && <input type="text" placeholder={timer.isBossMode ? "Enter Boss Name..." : "Enter Quest Name..."} value={timer.questName} onChange={(e) => timer.setQuestName(e.target.value)} className={`w-full bg-foreground/5 border-2 rounded-2xl px-6 py-3 focus:outline-none transition-all font-bold text-center placeholder:opacity-30 ${timer.isBossMode ? 'border-red-500/50 focus:border-red-500' : 'border-primary/20 focus:border-primary/50'}`} />}
+              {!timer.isActive && timer.mode === 'quest' && <input type="text" placeholder={timer.isBossMode ? t.timer.enterBossName : t.timer.enterQuestName} value={timer.questName} onChange={(e) => timer.setQuestName(e.target.value)} className={`w-full bg-foreground/5 border-2 rounded-2xl px-6 py-3 focus:outline-none transition-all font-bold text-center placeholder:opacity-30 ${timer.isBossMode ? 'border-red-500/50 focus:border-red-500' : 'border-primary/20 focus:border-primary/50'}`} />}
               {!timer.isActive && timer.mode === 'rest' && (
                 <div className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500 w-full">
                   <div className="flex justify-center gap-3 w-full">
-                    <button onClick={() => { playEffect('click'); timer.setTimeLeft(5*60); }} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${timer.timeLeft === 5*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}>Short (5m)</button>
-                    <button onClick={() => { playEffect('click'); timer.setTimeLeft(15*60); }} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${timer.timeLeft === 15*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}>Long (15m)</button>
+                    <button onClick={() => { playEffect('click'); timer.setTimeLeft(5*60); }} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${timer.timeLeft === 5*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}>{t.timer.shortRest}</button>
+                    <button onClick={() => { playEffect('click'); timer.setTimeLeft(15*60); }} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${timer.timeLeft === 15*60 ? 'bg-primary text-primary-foreground' : 'bg-foreground/5 opacity-60'}`}>{t.timer.longRest}</button>
                   </div>
                   {currentUser && (
                     <Link href="/journal" onClick={() => playEffect('click')} className="flex items-center justify-center gap-2 w-full bg-foreground/5 border-2 border-primary/20 rounded-xl px-4 py-3 hover:bg-primary/10 hover:border-primary/50 transition-all font-black text-[10px] uppercase tracking-widest text-primary/80 group">
                       <BookOpen className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      Write in Journal
+                      {t.timer.writeInJournal}
                     </Link>
                   )}
                 </div>
               )}
             </div>
-            {timer.isBossMode && timer.isActive && <div className="flex items-center gap-2 text-red-500 animate-bounce"><Flame className="w-4 h-4 fill-current" /><span className="text-[10px] font-black uppercase tracking-[0.3em]">Extreme Concentration Required</span><Flame className="w-4 h-4 fill-current" /></div>}
-            <TimerDisplay timeLeft={timer.timeLeft} duration={timer.mode === 'quest' ? timer.duration : (timer.timeLeft > 5*60 ? 15 : 5)} isActive={timer.isActive} message={message} formatTime={formatTime} questName={timer.isBossMode ? `BOSS: ${timer.questName || "ANCIENT EVIL"}` : (timer.mode === 'rest' ? "Resting at Inn" : timer.questName)} />
+            {timer.isBossMode && timer.isActive && <div className="flex items-center gap-2 text-red-500 animate-bounce"><Flame className="w-4 h-4 fill-current" /><span className="text-[10px] font-black uppercase tracking-[0.3em]">{t.timer.extremeConcentration}</span><Flame className="w-4 h-4 fill-current" /></div>}
+            <TimerDisplay timeLeft={timer.timeLeft} duration={timer.mode === 'quest' ? timer.duration : (timer.timeLeft > 5*60 ? 15 : 5)} isActive={timer.isActive} message={message} formatTime={formatTime} questName={timer.isBossMode ? `BOSS: ${timer.questName || t.timer.ancientEvil}` : (timer.mode === 'rest' ? t.timer.restingAtInn : timer.questName)} />
             <div className="flex gap-8 md:gap-10">
               <button onClick={() => { if (!timer.isActive && timer.isBossMode) playEffect('boss'); timer.toggleTimer(); }} disabled={timer.isActive && timer.isBossMode} className={`group relative w-20 h-20 md:w-24 md:h-24 rounded-[2.5rem] transition-all duration-300 transform active:scale-90 flex items-center justify-center border-b-4 ${timer.isActive ? (timer.isBossMode ? 'bg-red-900/40 border-red-950 opacity-50 cursor-not-allowed' : 'bg-foreground/10 border-foreground/20') : (timer.isBossMode ? 'bg-red-600 border-red-800 text-white shadow-[0_0_30px_rgba(220,38,38,0.4)]' : 'bg-primary border-primary/50 text-primary-foreground')}`}>{timer.isActive ? <Pause className="w-8 h-8 md:w-10 md:h-10" /> : <Play className="w-8 h-8 md:w-10 md:h-10 ml-1" />}<div className={`absolute -inset-2 blur-2xl opacity-0 group-hover:opacity-20 transition-opacity rounded-full ${timer.isActive ? 'bg-foreground' : (timer.isBossMode ? 'bg-red-500' : 'bg-primary')}`} /></button>
               <button onClick={() => {
@@ -297,7 +299,7 @@ export default function PomodoroQuest() {
                   const penalty = 50;
                   const newExp = Math.max(0, currentUser.exp - penalty);
                   updateCurrentUserAndList({ ...currentUser, exp: newExp });
-                  setMessage(`FLED FROM BOSS! -${penalty} EXP PENALTY`);
+                  setMessage(t.timer.fledFromBoss.replace('{penalty}', penalty.toString()));
                   setTimeout(() => setMessage(""), 5000);
                 }
                 playEffect('click'); timer.resetTimer(); 

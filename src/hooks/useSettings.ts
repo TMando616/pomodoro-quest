@@ -8,6 +8,7 @@ export type AppSettings = {
   autoStartRest: boolean;
   compactHUD: boolean;
   theme: string;
+  language: 'en' | 'ja';
 };
 
 /**
@@ -21,6 +22,7 @@ export function useSettings() {
       autoStartRest: false,
       compactHUD: false,
       theme: 'emerald',
+      language: 'ja',
     };
     if (typeof window === 'undefined') return defaultSettings;
     const saved = localStorage.getItem('pq_settings');
