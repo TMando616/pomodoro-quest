@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 // Lucide React からアイコンをインポート
-import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw, BookOpen, MessageSquare, Target } from 'lucide-react';
+import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw, BookOpen, MessageSquare, Target, Settings2 } from 'lucide-react';
 // 型定義と定数をインポート
 import { QuestLog, User } from '@/types';
 import { titles } from '@/constants';
@@ -29,6 +29,7 @@ export default function PomodoroQuest() {
   const [message, setMessage] = useState(""); // 画面中央に表示する通知メッセージ
   const [currentTheme, setCurrentTheme] = useState('emerald'); // 現在選択されているテーマ名
   const [isLogsOpen, setIsLogsOpen] = useState(false); // 履歴パネルが開いているか
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // サイドバーが開いているか
   const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none'); // 認証画面の状態
   const [authForm, setAuthForm] = useState({ username: '' }); // ログイン/登録フォームの入力値
   const [authError, setAuthError] = useState(""); // 認証エラーメッセージ
@@ -178,14 +179,27 @@ export default function PomodoroQuest() {
   return (
     <div className={`min-h-screen transition-colors duration-1000 flex flex-col items-center justify-center font-mono p-4 md:p-8 selection:bg-primary/30 overflow-x-hidden ${timer.isBossMode && timer.isActive ? 'bg-red-950/20' : 'bg-background'}`}>
       
-      {/* 右側の操作パネル */}
+      {/* 右上の設定トグルボタン */}
+      <div className="fixed top-6 right-6 md:top-24 md:right-8 z-[60]">
+        <button 
+          onClick={() => { playEffect('click'); setIsSidebarOpen(true); }}
+          className="group flex items-center gap-2 p-3 bg-background/40 border-2 border-primary/20 rounded-2xl hover:bg-primary/10 hover:border-primary/40 transition-all shadow-lg backdrop-blur-md"
+        >
+          <Settings2 className="w-5 h-5 text-primary group-hover:rotate-90 transition-transform duration-500" />
+          <span className="text-[10px] font-black uppercase tracking-widest pr-1 hidden md:inline">Config</span>
+        </button>
+      </div>
+
+      {/* 右側の操作パネル（モーダル） */}
       <Sidebar 
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
         currentUser={currentUser} currentTheme={currentTheme} duration={timer.duration} isActive={timer.isActive} isSoundOn={isSoundOn}
-        onLogout={() => { playEffect('click'); logout(); timer.setIsActive(false); }}
-        onOpenAuth={() => { playEffect('click'); setIsAuthMode('login'); }}
+        onLogout={() => { playEffect('click'); logout(); timer.setIsActive(false); setIsSidebarOpen(false); }}
+        onOpenAuth={() => { playEffect('click'); setIsAuthMode('login'); setIsSidebarOpen(false); }}
         onThemeChange={(theme) => { playEffect('click'); setCurrentTheme(theme); }}
         onDurationSelect={timer.selectDuration}
-        onOpenLogs={() => { playEffect('click'); setIsLogsOpen(true); }}
+        onOpenLogs={() => { playEffect('click'); setIsLogsOpen(true); setIsSidebarOpen(false); }}
         onToggleSound={toggleSound}
       />
 
