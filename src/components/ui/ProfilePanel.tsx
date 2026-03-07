@@ -6,6 +6,7 @@ import { Crown, Check, X } from 'lucide-react';
 // 型定義と定数をインポート
 import { User } from '@/types';
 import { titles } from '@/constants';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * プロフィールパネルのプロパティ定義
@@ -20,6 +21,8 @@ type ProfilePanelProps = {
  * 称号のアンロック状況の確認や装備を行うプロフィール画面
  */
 export function ProfilePanel({ user, onClose, onEquipTitle }: ProfilePanelProps) {
+  const { t } = useTranslation();
+
   return (
     // 背景のぼかしオーバーレイ
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -30,7 +33,7 @@ export function ProfilePanel({ user, onClose, onEquipTitle }: ProfilePanelProps)
         <div className="p-6 border-b-2 border-primary/20 flex justify-between items-center bg-primary/5">
           <div className="flex items-center gap-3">
             <Crown className="w-6 h-6 text-primary" />
-            <h2 className="text-xl font-black uppercase tracking-[0.2em] text-primary">Adventurer Profile</h2>
+            <h2 className="text-xl font-black uppercase tracking-[0.2em] text-primary">{t.navbar.profile}</h2>
           </div>
           {/* 閉じるボタン */}
           <button onClick={onClose} className="p-2 hover:bg-foreground/10 rounded-full transition-all">
@@ -41,7 +44,7 @@ export function ProfilePanel({ user, onClose, onEquipTitle }: ProfilePanelProps)
         {/* コンテンツ（称号一覧リスト） */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
           <div className="space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-widest opacity-50 px-1">Unlocked Titles</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest opacity-50 px-1">{t.profile.unlockedTitles}</h3>
             <div className="grid gap-3">
               {/* 定数ファイルで定義されているすべての称号をループ表示 */}
               {titles.map((title) => {
@@ -49,6 +52,10 @@ export function ProfilePanel({ user, onClose, onEquipTitle }: ProfilePanelProps)
                 const isUnlocked = user.unlockedTitles.includes(title.id);
                 // その称号を現在装備しているかチェック
                 const isEquipped = user.currentTitleId === title.id;
+                
+                // 翻訳情報の取得
+                const titleKey = title.id as keyof typeof t.titles;
+                const titleInfo = t.titles[titleKey] || { name: title.name, desc: title.description };
 
                 return (
                   <button
@@ -65,16 +72,16 @@ export function ProfilePanel({ user, onClose, onEquipTitle }: ProfilePanelProps)
                   >
                     <div className="flex justify-between items-start mb-1">
                       <h4 className={`font-black uppercase tracking-widest text-sm ${isEquipped ? 'text-primary' : ''}`}>
-                        {title.name}
+                        {titleInfo.name}
                       </h4>
                       {isEquipped && <Check className="w-4 h-4 text-primary" />}
                     </div>
                     {/* 称号の説明文 */}
-                    <p className="text-[10px] opacity-60 leading-relaxed">{title.description}</p>
+                    <p className="text-[10px] opacity-60 leading-relaxed font-bold">{titleInfo.desc}</p>
                     {/* 未開放時のヒント */}
                     {!isUnlocked && (
                       <div className="mt-2 text-[8px] font-black uppercase tracking-tighter text-primary/60">
-                        Condition hidden...
+                        {t.profile.reqHidden}
                       </div>
                     )}
                   </button>
@@ -86,7 +93,7 @@ export function ProfilePanel({ user, onClose, onEquipTitle }: ProfilePanelProps)
 
         {/* フッター */}
         <div className="p-4 bg-primary/5 border-t-2 border-primary/20 text-center text-[10px] font-black uppercase tracking-widest opacity-40">
-          The legend of {user.username} continues...
+          {t.profile.legendContinues.replace('{name}', user.username)}
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { useUser } from '@/hooks/useUser';
 import { useAudio } from '@/hooks/useAudio';
 import { useGuild } from '@/hooks/useGuild';
 import { User } from '@/types';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * 管理者専用ダッシュボードページ
@@ -15,6 +16,7 @@ export default function AdminPage() {
   const { users, currentUser, adminDeleteUser, adminUpdateUser } = useUser();
   const { guildInfo, updateGlobalMessage, updateDailyQuest } = useGuild();
   const { playEffect } = useAudio();
+  const { t } = useTranslation();
   
   const [newGlobalMsg, setNewGlobalMsg] = useState(guildInfo.globalMessage);
   const [dqTitle, setDqTitle] = useState(guildInfo.dailyQuest.title);
@@ -26,9 +28,9 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h1 className="text-xl font-black uppercase tracking-widest text-red-500">Access Denied</h1>
+        <h1 className="text-xl font-black uppercase tracking-widest text-red-500">{t.admin.accessDenied}</h1>
         <Link href="/" className="mt-8 text-[10px] font-black uppercase border-b border-primary text-primary pb-1">
-          Return to Quest
+          {t.admin.confirmReset.replace('{name}', t.common.quest)}
         </Link>
       </div>
     );
@@ -50,7 +52,7 @@ export default function AdminPage() {
 
   const resetStats = (user: User) => {
     playEffect('click');
-    if (confirm(`Reset stats for ${user.username}?`)) {
+    if (confirm(t.admin.confirmReset.replace('{name}', user.username))) {
       adminUpdateUser({ ...user, level: 1, exp: 0, totalFocusTime: 0, completedQuestsCount: 0 });
     }
   };
@@ -58,7 +60,7 @@ export default function AdminPage() {
   const handleBroadcast = () => {
     playEffect('click');
     updateGlobalMessage(newGlobalMsg);
-    alert("Message broadcasted to all guild members!");
+    alert(t.admin.broadcastSuccess);
   };
 
   return (
@@ -69,12 +71,12 @@ export default function AdminPage() {
         <div className="flex items-center gap-3">
           <Shield className="w-8 h-8 text-red-500" />
           <div>
-            <h1 className="text-2xl font-black uppercase tracking-[0.2em] text-red-500">Admin Council</h1>
-            <p className="text-[10px] opacity-60 uppercase tracking-widest text-red-400/80">Guild Maintenance & Order</p>
+            <h1 className="text-2xl font-black uppercase tracking-[0.2em] text-red-500">{t.admin.council}</h1>
+            <p className="text-[10px] opacity-60 uppercase tracking-widest text-red-400/80">{t.admin.maintenance}</p>
           </div>
         </div>
         <Link href="/" className="flex items-center gap-2 px-4 py-2 bg-foreground/5 border border-foreground/10 rounded-xl hover:bg-foreground/10 transition-all text-[10px] font-black uppercase tracking-widest">
-          <ArrowLeft className="w-3 h-3" /> Back
+          <ArrowLeft className="w-3 h-3" /> {t.common.back}
         </Link>
       </div>
 
@@ -83,7 +85,7 @@ export default function AdminPage() {
         {/* Left: Global Message */}
         <div className="md:col-span-1 bg-foreground/5 border-2 border-red-500/20 rounded-[2.5rem] p-6 shadow-lg flex flex-col">
           <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-red-400">
-            <MessageSquare className="w-3 h-3" /> Broadcaster
+            <MessageSquare className="w-3 h-3" /> {t.admin.broadcaster}
           </h3>
           <textarea 
             value={newGlobalMsg}
@@ -94,42 +96,42 @@ export default function AdminPage() {
             onClick={handleBroadcast}
             className="w-full bg-red-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl shadow-lg hover:bg-red-500 transition-all flex items-center justify-center gap-2"
           >
-            <Send className="w-4 h-4" /> Broadcast
+            <Send className="w-4 h-4" /> {t.admin.broadcast}
           </button>
         </div>
 
         {/* Center: Daily Quest Editor */}
         <div className="md:col-span-1 bg-foreground/5 border-2 border-primary/20 rounded-[2.5rem] p-6 shadow-lg flex flex-col">
           <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-primary">
-            <Target className="w-3 h-3" /> Daily Challenge
+            <Target className="w-3 h-3" /> {t.admin.dailyChallenge}
           </h3>
           <div className="space-y-3 flex-1">
             <input value={dqTitle} onChange={e => setDqTitle(e.target.value)} placeholder="Quest Title" className="w-full bg-background/50 border border-primary/20 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-primary/50" />
             <div className="flex items-center gap-2">
               <input type="number" value={dqReq} onChange={e => setDqReq(Number(e.target.value))} className="w-20 bg-background/50 border border-primary/20 rounded-xl px-4 py-2 text-xs focus:outline-none" />
-              <span className="text-[10px] font-black opacity-40 uppercase">Mins Req.</span>
+              <span className="text-[10px] font-black opacity-40 uppercase">{t.common.mins} Req.</span>
             </div>
             <input value={dqReward} onChange={e => setDqReward(e.target.value)} placeholder="Reward Title" className="w-full bg-background/50 border border-primary/20 rounded-xl px-4 py-2 text-xs focus:outline-none" />
           </div>
           <button 
-            onClick={() => { playEffect('click'); updateDailyQuest(dqTitle, dqReq, dqReward); alert("Daily Mission Updated!"); }}
+            onClick={() => { playEffect('click'); updateDailyQuest(dqTitle, dqReq, dqReward); alert(t.admin.missionUpdated); }}
             className="w-full bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 mt-4"
           >
-            <Star className="w-4 h-4" /> Update Mission
+            <Star className="w-4 h-4" /> {t.admin.updateMission}
           </button>
         </div>
 
         {/* Right: Activity Trend */}
         <div className="md:col-span-1 bg-foreground/5 border-2 border-primary/10 rounded-[2.5rem] p-6 shadow-lg flex flex-col justify-between">
           <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-primary" /> Active Hours
+            <TrendingUp className="w-4 h-4 text-primary" /> {t.admin.activeHours}
           </h3>
           <div className="flex items-end justify-between gap-1 h-24">
             {[40, 70, 45, 90, 65, 30, 50, 85, 100, 40].map((val, i) => (
               <div key={i} className="flex-1 bg-primary/20 border-t border-primary/40 rounded-t-sm" style={{ height: `${val}%` }} />
             ))}
           </div>
-          <p className="text-[8px] opacity-40 mt-4 text-center">Peak activity detected at 22:00</p>
+          <p className="text-[8px] opacity-40 mt-4 text-center">{t.admin.peakActivity.replace('{time}', '22:00')}</p>
         </div>
       </div>
 
@@ -139,10 +141,10 @@ export default function AdminPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-primary/5 border-b border-primary/10">
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest opacity-40">Adventurer</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest opacity-40">Status</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest opacity-40">Role</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Actions</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest opacity-40">{t.common.adventurer}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest opacity-40">{t.admin.status}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest opacity-40">{t.admin.role}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">{t.admin.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-primary/5">
@@ -157,7 +159,7 @@ export default function AdminPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-black text-primary italic">Lv. {user.level}</span>
-                      <span className="text-[9px] opacity-40">{user.completedQuestsCount} Quests</span>
+                      <span className="text-[9px] opacity-40">{user.completedQuestsCount} {t.common.quest}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">

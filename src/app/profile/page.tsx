@@ -6,6 +6,7 @@ import { titles } from '@/constants';
 import { useUser } from '@/hooks/useUser';
 import { useAudio } from '@/hooks/useAudio';
 import { HUD } from '@/components/ui/HUD';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * 冒険者プロフィールページ
@@ -13,18 +14,17 @@ import { HUD } from '@/components/ui/HUD';
 export default function ProfilePage() {
   const { currentUser, updateCurrentUserAndList, logout } = useUser();
   const { playEffect } = useAudio();
+  const { t } = useTranslation();
 
   if (!currentUser) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <Shield className="w-16 h-16 text-foreground/20 mb-4" />
-        <h1 className="text-xl font-black uppercase tracking-widest text-foreground/50">Not Authenticated</h1>
-        <p className="text-xs opacity-40 mt-2">Please login from the Quest page to view your profile.</p>
+        <h1 className="text-xl font-black uppercase tracking-widest text-foreground/50">{t.profile.notAuth}</h1>
+        <p className="text-xs opacity-40 mt-2">{t.profile.notAuthDesc}</p>
       </div>
     );
   }
-
-  const currentTitleName = titles.find(t => t.id === currentUser.currentTitleId)?.name;
 
   const handleEquip = (id: string) => {
     playEffect('click');
@@ -41,13 +41,17 @@ export default function ProfilePage() {
 
   // 実績メダルの定義
   const badges = [
-    { label: 'First Quest', icon: Zap, active: currentUser.completedQuestsCount >= 1, color: 'text-blue-400' },
-    { label: 'Focus Master', icon: Clock, active: currentUser.totalFocusTime >= 300, color: 'text-emerald-400' },
-    { label: 'Monster Slayer', icon: Swords, active: currentUser.completedQuestsCount >= 10, color: 'text-orange-400' },
-    { label: 'Guild Elite', icon: Star, active: currentUser.level >= 5, color: 'text-yellow-400' },
-    { label: 'Guild Admin', icon: Shield, active: currentUser.role === 'admin', color: 'text-red-400' },
-    { label: 'Legendary', icon: Medal, active: currentUser.level >= 10, color: 'text-purple-400' },
+    { label: t.profile.badges.firstQuest, icon: Zap, active: currentUser.completedQuestsCount >= 1, color: 'text-blue-400' },
+    { label: t.profile.badges.focusMaster, icon: Clock, active: currentUser.totalFocusTime >= 300, color: 'text-emerald-400' },
+    { label: t.profile.badges.monsterSlayer, icon: Swords, active: currentUser.completedQuestsCount >= 10, color: 'text-orange-400' },
+    { label: t.profile.badges.guildElite, icon: Star, active: currentUser.level >= 5, color: 'text-yellow-400' },
+    { label: t.profile.badges.guildAdmin, icon: Shield, active: currentUser.role === 'admin', color: 'text-red-400' },
+    { label: t.profile.badges.legendary, icon: Medal, active: currentUser.level >= 10, color: 'text-purple-400' },
   ];
+
+  // 現在装備中の称号翻訳
+  const equippedTitleKey = currentUser.currentTitleId as keyof typeof t.titles;
+  const currentTitleName = t.titles[equippedTitleKey]?.name || "";
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 md:p-8 pt-8 max-w-4xl mx-auto animate-in fade-in duration-500 pb-24">
@@ -80,31 +84,31 @@ export default function ProfilePage() {
               <Award className="w-24 h-24" />
             </div>
             <h3 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10">
-              <Shield className="w-3 h-3 text-primary" /> Adventurer Stats
+              <Shield className="w-3 h-3 text-primary" /> {t.profile.stats}
             </h3>
             
             <div className="space-y-4 relative z-10">
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-black opacity-40 uppercase tracking-tighter">Total Focus Time</span>
+                <span className="text-[10px] font-black opacity-40 uppercase tracking-tighter">{t.profile.totalFocus}</span>
                 <div className="flex items-end gap-2 text-primary">
                   <Clock className="w-4 h-4 mb-1" />
                   <span className="text-2xl font-black italic">{currentUser.totalFocusTime || 0}</span>
-                  <span className="text-[10px] font-black mb-1.5 opacity-60">MINS</span>
+                  <span className="text-[10px] font-black mb-1.5 opacity-60 uppercase">{t.common.mins}</span>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-black opacity-40 uppercase tracking-tighter">Quests Completed</span>
+                <span className="text-[10px] font-black opacity-40 uppercase tracking-tighter">{t.profile.questsCompleted}</span>
                 <div className="flex items-end gap-2 text-primary">
                   <Swords className="w-4 h-4 mb-1" />
                   <span className="text-2xl font-black italic">{currentUser.completedQuestsCount || 0}</span>
-                  <span className="text-[10px] font-black mb-1.5 opacity-60">TASKS</span>
+                  <span className="text-[10px] font-black mb-1.5 opacity-60 uppercase">{t.common.tasks}</span>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1 pt-4 border-t border-primary/10">
                 <span className="text-[10px] font-black opacity-40 uppercase tracking-tighter flex items-center gap-1">
-                  <Calendar className="w-3 h-3" /> Guild Member Since
+                  <Calendar className="w-3 h-3" /> {t.profile.memberSince}
                 </span>
                 <span className="text-xs font-black text-foreground/80">{joinDate}</span>
               </div>
@@ -115,7 +119,7 @@ export default function ProfilePage() {
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-red-950/20 text-red-500 border-2 border-red-900/30 rounded-2xl hover:bg-red-900/40 hover:border-red-500 transition-all font-black text-xs uppercase tracking-widest"
           >
-            <LogOut className="w-4 h-4" /> Retire from Guild
+            <LogOut className="w-4 h-4" /> {t.profile.retire}
           </button>
         </div>
 
@@ -124,7 +128,7 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between mb-6 border-b border-primary/10 pb-4">
             <div className="flex items-center gap-3">
               <Crown className="w-6 h-6 text-primary" />
-              <h2 className="text-xl font-black uppercase tracking-[0.2em] text-primary">Unlocked Titles</h2>
+              <h2 className="text-xl font-black uppercase tracking-[0.2em] text-primary">{t.profile.unlockedTitles}</h2>
             </div>
             <span className="text-xs font-black opacity-40 uppercase tracking-widest">
               {currentUser.unlockedTitles.length} / {titles.length}
@@ -135,6 +139,9 @@ export default function ProfilePage() {
             {titles.map((title) => {
               const isUnlocked = currentUser.unlockedTitles.includes(title.id);
               const isEquipped = currentUser.currentTitleId === title.id;
+              
+              const titleKey = title.id as keyof typeof t.titles;
+              const titleInfo = t.titles[titleKey] || { name: title.name, desc: title.description };
 
               return (
                 <button
@@ -152,15 +159,15 @@ export default function ProfilePage() {
                   <div className="w-full">
                     <div className="flex justify-between items-start mb-2">
                       <h4 className={`font-black uppercase tracking-widest text-sm ${isEquipped ? 'text-primary' : ''}`}>
-                        {title.name}
+                        {titleInfo.name}
                       </h4>
                       {isEquipped && <Check className="w-5 h-5 text-primary shadow-[0_0_10px_var(--color-primary)] rounded-full" />}
                     </div>
-                    <p className="text-[10px] opacity-80 leading-relaxed font-bold">{title.description}</p>
+                    <p className="text-[10px] opacity-80 leading-relaxed font-bold">{titleInfo.desc}</p>
                   </div>
                   {!isUnlocked && (
                     <div className="mt-4 text-[9px] font-black uppercase tracking-widest text-primary/60 border-t border-primary/5 pt-2">
-                      Requirement hidden...
+                      {t.profile.reqHidden}
                     </div>
                   )}
                 </button>

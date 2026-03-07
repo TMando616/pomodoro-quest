@@ -6,6 +6,7 @@ import { useJournal } from '@/hooks/useJournal';
 import { useUser } from '@/hooks/useUser';
 import { useAudio } from '@/hooks/useAudio';
 import { JournalEntry } from '@/types';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * 冒険日誌（日記）ページ
@@ -14,6 +15,7 @@ export default function JournalPage() {
   const { currentUser } = useUser();
   const { entries, addEntry, deleteEntry, updateEntry } = useJournal();
   const { playEffect } = useAudio();
+  const { t } = useTranslation();
   
   const [content, setContent] = useState("");
   const [mood, setMood] = useState<JournalEntry['mood']>('good');
@@ -23,8 +25,8 @@ export default function JournalPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <BookOpen className="w-16 h-16 text-foreground/20 mb-4" />
-        <h1 className="text-xl font-black uppercase tracking-widest text-foreground/50">Journal Locked</h1>
-        <p className="text-xs opacity-40 mt-2">Please login to write your adventure log.</p>
+        <h1 className="text-xl font-black uppercase tracking-widest text-foreground/50">{t.journal.locked}</h1>
+        <p className="text-xs opacity-40 mt-2">{t.journal.lockedDesc}</p>
       </div>
     );
   }
@@ -78,8 +80,8 @@ export default function JournalPage() {
       <div className="w-full flex items-center gap-3 mb-8 pb-4 border-b-2 border-primary/20">
         <BookOpen className="w-8 h-8 text-primary" />
         <div>
-          <h1 className="text-2xl font-black uppercase tracking-[0.2em] text-primary">Adventure Journal</h1>
-          <p className="text-[10px] opacity-60 uppercase tracking-widest">Chronicles of {currentUser.username}</p>
+          <h1 className="text-2xl font-black uppercase tracking-[0.2em] text-primary">{t.journal.title}</h1>
+          <p className="text-[10px] opacity-60 uppercase tracking-widest">{t.journal.subtitle.replace('{name}', currentUser.username)}</p>
         </div>
       </div>
 
@@ -89,7 +91,7 @@ export default function JournalPage() {
           <div className="flex justify-between items-center px-2">
             <span className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${editingId ? 'text-amber-500' : 'opacity-60'}`}>
               {editingId ? <Edit3 className="w-3 h-3" /> : <PenTool className="w-3 h-3" />}
-              {editingId ? 'Editing Record' : 'New Entry'}
+              {editingId ? t.journal.editing : t.journal.newEntry}
             </span>
             <div className="flex gap-2">
               {(['great', 'good', 'tired', 'bad'] as const).map(m => (
@@ -108,7 +110,7 @@ export default function JournalPage() {
           <textarea 
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Write about your focus journey today..."
+            placeholder={t.journal.placeholder}
             className="w-full bg-background/50 border-2 border-primary/10 rounded-2xl p-4 min-h-[120px] focus:outline-none focus:border-primary/50 resize-none transition-all"
           />
           <div className="flex justify-end gap-3">
@@ -118,7 +120,7 @@ export default function JournalPage() {
                 onClick={cancelEdit}
                 className="px-6 py-2 bg-foreground/10 text-foreground/60 font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-foreground/20 transition-all flex items-center gap-2"
               >
-                <X className="w-3 h-3" /> Cancel
+                <X className="w-3 h-3" /> {t.common.cancel}
               </button>
             )}
             <button 
@@ -127,7 +129,7 @@ export default function JournalPage() {
               className={`px-6 py-2 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg hover:brightness-110 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2 ${editingId ? 'bg-amber-500 text-white' : 'bg-primary text-primary-foreground'}`}
             >
               {editingId ? <Check className="w-3 h-3" /> : null}
-              {editingId ? 'Update Record' : 'Seal the Record'}
+              {editingId ? t.journal.update : t.journal.seal}
             </button>
           </div>
         </form>
@@ -137,7 +139,7 @@ export default function JournalPage() {
       <div className="w-full flex flex-col gap-4 pb-20">
         {userEntries.length === 0 ? (
           <div className="text-center py-10 opacity-30 text-xs font-black uppercase tracking-widest">
-            No entries yet...
+            {t.journal.noEntries}
           </div>
         ) : (
           userEntries.map(entry => (

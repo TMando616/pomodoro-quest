@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Users, Trophy, Shield, Crown, Zap, Flame, Clock, Swords, Filter, Activity } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { titles } from '@/constants';
+import { useTranslation } from '@/hooks/useTranslation';
 
 type SortCategory = 'level' | 'time' | 'quests';
 
@@ -13,6 +14,7 @@ type SortCategory = 'level' | 'time' | 'quests';
 export default function GuildPage() {
   const { users, currentUser, questLogs } = useUser();
   const [sortCategory, setSortCategory] = useState<SortCategory>('level');
+  const { t } = useTranslation();
 
   // カテゴリに基づいてユーザーをソート
   const sortedUsers = [...users].sort((a, b) => {
@@ -35,10 +37,10 @@ export default function GuildPage() {
 
   // ギルド全体のランク（モック判定）
   const getGuildGrade = () => {
-    if (totalGuildFocusTime > 10000) return { name: 'Legendary Guild', color: 'text-yellow-500' };
-    if (totalGuildFocusTime > 5000) return { name: 'Elite Alliance', color: 'text-purple-500' };
-    if (totalGuildFocusTime > 1000) return { name: 'Active Brotherhood', color: 'text-blue-500' };
-    return { name: 'Novice Circle', color: 'text-emerald-500' };
+    if (totalGuildFocusTime > 10000) return { name: t.guild.grades.legendary, color: 'text-yellow-500' };
+    if (totalGuildFocusTime > 5000) return { name: t.guild.grades.elite, color: 'text-purple-500' };
+    if (totalGuildFocusTime > 1000) return { name: t.guild.grades.active, color: 'text-blue-500' };
+    return { name: t.guild.grades.novice, color: 'text-emerald-500' };
   };
   const guildGrade = getGuildGrade();
 
@@ -50,12 +52,12 @@ export default function GuildPage() {
         <div className="flex items-center gap-3">
           <Users className="w-8 h-8 text-primary" />
           <div>
-            <h1 className="text-2xl font-black uppercase tracking-[0.2em] text-primary">Guild Tavern</h1>
+            <h1 className="text-2xl font-black uppercase tracking-[0.2em] text-primary">{t.guild.tavern}</h1>
             <p className={`text-[10px] font-black uppercase tracking-widest ${guildGrade.color}`}>{guildGrade.name}</p>
           </div>
         </div>
         <div className="flex flex-col items-end text-right">
-          <span className="text-[10px] font-black opacity-40 uppercase tracking-widest">Active Adventurers</span>
+          <span className="text-[10px] font-black opacity-40 uppercase tracking-widest">{t.guild.activeAdventurers}</span>
           <span className="text-xl font-black italic text-primary">{users.length}</span>
         </div>
       </div>
@@ -67,20 +69,20 @@ export default function GuildPage() {
         </div>
         <div className="relative z-10 flex flex-col md:flex-row justify-around items-center gap-8">
           <div className="text-center">
-            <span className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mb-2 block">Guild Total Focus</span>
+            <span className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mb-2 block">{t.guild.totalFocus}</span>
             <div className="flex items-center justify-center gap-2 text-primary">
               <Clock className="w-5 h-5" />
               <span className="text-3xl font-black italic tracking-tighter">{totalGuildFocusTime}</span>
-              <span className="text-[10px] font-black mt-2 opacity-60">MINS</span>
+              <span className="text-[10px] font-black mt-2 opacity-60 uppercase">{t.common.mins}</span>
             </div>
           </div>
           <div className="h-px w-20 bg-primary/20 md:h-12 md:w-px" />
           <div className="text-center">
-            <span className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mb-2 block">Monster Quests Slain</span>
+            <span className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mb-2 block">{t.guild.questsSlain}</span>
             <div className="flex items-center justify-center gap-2 text-primary">
               <Swords className="w-5 h-5" />
               <span className="text-3xl font-black italic tracking-tighter">{totalQuestsSlain}</span>
-              <span className="text-[10px] font-black mt-2 opacity-60">TASKS</span>
+              <span className="text-[10px] font-black mt-2 opacity-60 uppercase">{t.common.tasks}</span>
             </div>
           </div>
         </div>
@@ -90,7 +92,7 @@ export default function GuildPage() {
         <div className="md:col-span-1 space-y-6">
           <div className="bg-foreground/5 border-2 border-primary/10 rounded-[2rem] p-6">
             <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-              <Filter className="w-3 h-3 text-primary" /> Rank Category
+              <Filter className="w-3 h-3 text-primary" /> {t.guild.rankCategory}
             </h3>
             <div className="flex flex-col gap-2">
               {(['level', 'time', 'quests'] as SortCategory[]).map(cat => (
@@ -99,7 +101,7 @@ export default function GuildPage() {
                   onClick={() => setSortCategory(cat)}
                   className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-[10px] font-black uppercase tracking-widest ${sortCategory === cat ? 'border-primary bg-primary/10 text-primary shadow-md' : 'border-transparent bg-background/50 opacity-40 hover:opacity-100'}`}
                 >
-                  {cat === 'level' ? 'Highest Level' : cat === 'time' ? 'Total Focus' : 'Quests Cleared'}
+                  {cat === 'level' ? t.guild.highestLevel : cat === 'time' ? t.guild.totalFocusSort : t.guild.questsCleared}
                 </button>
               ))}
             </div>
@@ -107,18 +109,18 @@ export default function GuildPage() {
 
           <div className="bg-foreground/5 border-2 border-primary/10 rounded-[2rem] p-6 overflow-hidden">
             <h3 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-              <Activity className="w-3 h-3 text-primary" /> Tavern Chatter
+              <Activity className="w-3 h-3 text-primary" /> {t.guild.chatter}
             </h3>
             <div className="space-y-4">
               {allLogs.length === 0 ? (
-                <p className="text-[10px] opacity-30 italic">Silence fills the air...</p>
+                <p className="text-[10px] opacity-30 italic">{t.guild.silence}</p>
               ) : (
                 allLogs.map(log => {
                   const user = users.find(u => u.id === log.userId);
                   return (
                     <div key={log.id} className="border-l-2 border-primary/20 pl-3 py-1">
-                      <p className="text-[9px] font-black text-primary uppercase">{user?.username || 'Unknown Hero'}</p>
-                      <p className="text-[10px] opacity-80 leading-tight">Cleared <span className="font-bold text-foreground">{log.name}</span></p>
+                      <p className="text-[9px] font-black text-primary uppercase">{user?.username || t.guild.unknownHero}</p>
+                      <p className="text-[10px] opacity-80 leading-tight">{t.guild.cleared} <span className="font-bold text-foreground">{log.name}</span></p>
                       <p className="text-[8px] opacity-40 mt-1">{new Date(log.createdAt).toLocaleTimeString()}</p>
                     </div>
                   );
@@ -130,7 +132,7 @@ export default function GuildPage() {
 
         <div className="md:col-span-2 space-y-4">
           <h2 className="text-xs font-black uppercase tracking-[0.3em] opacity-50 px-2 flex items-center gap-2">
-            <Trophy className="w-3 h-3" /> Hall of Fame
+            <Trophy className="w-3 h-3" /> {t.guild.hallOfFame}
           </h2>
           <div className="space-y-3">
             {sortedUsers.map((user, index) => {
@@ -145,7 +147,7 @@ export default function GuildPage() {
                     <div className="flex items-center gap-2 mb-0.5">
                       <h4 className={`font-black uppercase tracking-widest truncate ${isMe ? 'text-primary' : ''}`}>{user.username}</h4>
                       {user.role === 'admin' && <Shield className="w-3 h-3 text-primary fill-current" />}
-                      {isMe && <span className="text-[8px] bg-primary text-primary-foreground px-1.5 rounded-full font-black uppercase">YOU</span>}
+                      {isMe && <span className="text-[8px] bg-primary text-primary-foreground px-1.5 rounded-full font-black uppercase">{t.common.you}</span>}
                     </div>
                     {userTitle && <div className="flex items-center gap-1 text-[8px] font-black text-primary/60 uppercase tracking-tighter truncate whitespace-nowrap"><Crown className="w-2 h-2" /> {userTitle}</div>}
                   </div>
@@ -153,9 +155,9 @@ export default function GuildPage() {
                     {sortCategory === 'level' ? (
                       <div className="text-xs font-black italic text-primary">Lv. {user.level}</div>
                     ) : sortCategory === 'time' ? (
-                      <div className="text-xs font-black italic text-primary">{user.totalFocusTime || 0}m</div>
+                      <div className="text-xs font-black italic text-primary">{user.totalFocusTime || 0}{t.common.mins}</div>
                     ) : (
-                      <div className="text-xs font-black italic text-primary">{user.completedQuestsCount || 0} Qs</div>
+                      <div className="text-xs font-black italic text-primary">{user.completedQuestsCount || 0} {t.common.tasks}</div>
                     )}
                     <div className="flex items-center justify-end gap-1 mt-1">
                       <div className="w-16 h-1 bg-background rounded-full border border-primary/10 overflow-hidden">
