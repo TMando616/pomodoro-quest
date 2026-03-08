@@ -17,34 +17,46 @@ const SETTINGS_UPDATE_EVENT = 'pq-settings-updated';
  * アプリケーションの全体設定を管理するフック
  */
 export function useSettings() {
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    const defaultSettings: AppSettings = {
-      defaultDuration: 25,
-      showNotifications: true,
-      autoStartRest: false,
-      compactHUD: false,
-      theme: 'emerald',
-      language: 'ja',
-    };
-
-    if (typeof window === 'undefined') return defaultSettings;
-    const saved = localStorage.getItem('pq_settings');
-    return saved ? JSON.parse(saved) : defaultSettings;
+  // サーバーとクライアントの初回レンダリングを一致させるため、常にデフォルト値で開始
+  const [settings, setSettings] = useState<AppSettings>({
+    defaultDuration: 25,
+    showNotifications: true,
+    autoStartRest: false,
+    compactHUD: false,
+    theme: 'emerald',
+    language: 'ja',
   });
 
-  // 無限ループ防止のための参照
+  const [isMounted, setIsMounted] = useState(false);
   const isInternalUpdate = useRef(false);
+
+  // マウント時に localStorage から読み込む
+  useEffect(() => {
+    const saved = localStorage.getItem('pq_settings');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSettings(parsed);
+      } catch (e) {
+        console.error("Failed to parse settings", e);
+      }
+    }
+    setIsMounted(true);
+  }, []);
 
   // 設定が変更されたら localStorage に保存し、他のインスタンスに通知する
   useEffect(() => {
+    // マウント完了前、または外部からの更新時はスキップ
+    if (!isMounted) return;
+    
     localStorage.setItem('pq_settings', JSON.stringify(settings));
     
-    // 他のインスタンスからの更新（外部更新）による変更でない場合のみイベントを発行
     if (isInternalUpdate.current) {
       window.dispatchEvent(new CustomEvent(SETTINGS_UPDATE_EVENT, { detail: settings }));
       isInternalUpdate.current = false;
     }
-  }, [settings]);
+  }, [settings, isMounted]);
 
   const updateSettings = useCallback((newSettings: Partial<AppSettings>) => {
     isInternalUpdate.current = true;
@@ -60,7 +72,6 @@ export function useSettings() {
       const newSettings = customEvent.detail;
       
       setSettings((prev) => {
-        // 深い比較を行い、本当に変更がある場合のみ更新
         if (JSON.stringify(prev) === JSON.stringify(newSettings)) return prev;
         return newSettings;
       });
@@ -72,6 +83,7 @@ export function useSettings() {
 
   return {
     settings,
-    updateSettings
+    updateSettings,
+    isMounted
   };
 }
