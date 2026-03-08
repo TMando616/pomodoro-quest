@@ -27,10 +27,12 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "PomoQuest",
   },
   icons: {
+    icon: "/apple-touch-icon.png",
+    shortcut: "/apple-touch-icon.png",
     apple: "/apple-touch-icon.png",
   },
   formatDetection: {
