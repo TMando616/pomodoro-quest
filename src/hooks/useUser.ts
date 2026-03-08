@@ -167,12 +167,16 @@ export function useUser() {
     if (users.find(u => u.username === username)) {
       return { success: false, error: "Name already taken." };
     }
+    // 最初の一人目、または特定の名前を管理者にする
+    const isFirstUser = users.length === 0;
+    const role = (isFirstUser || username.toLowerCase() === 'admin') ? 'admin' : 'user';
+
     const newUser: User = { 
       id: Date.now().toString(), 
       username, 
       level: 1, 
       exp: 0, 
-      role: 'user',
+      role,
       joinedAt: Date.now(),
       totalFocusTime: 0,
       completedQuestsCount: 0,
