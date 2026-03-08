@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Users, Trophy, Shield, Crown, Zap, Flame, Clock, Swords, Filter, Activity } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { titles } from '@/constants';
@@ -16,7 +16,43 @@ export default function GuildPage() {
   const [sortCategory, setSortCategory] = useState<SortCategory>('level');
   const { t } = useTranslation();
 
-  // マウント前はハイドレーションエラー防止のためローディングを表示
+  // カテゴリに基づいてユーザーをソート（最適化）
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => {
+      if (sortCategory === 'level') {
+        if (b.level !== a.level) return b.level - a.level;
+        return b.exp - a.exp;
+      } else if (sortCategory === 'time') {
+        return (b.totalFocusTime || 0) - (a.totalFocusTime || 0);
+      } else {
+        return (b.completedQuestsCount || 0) - (a.completedQuestsCount || 0);
+      }
+    });
+  }, [users, sortCategory]);
+
+  // ギルドの累計統計を計算（最適化）
+  const stats = useMemo(() => {
+    return {
+      totalFocusTime: users.reduce((acc, u) => acc + (u.totalFocusTime || 0), 0),
+      totalQuestsSlain: users.reduce((acc, u) => acc + (u.completedQuestsCount || 0), 0)
+    };
+  }, [users]);
+
+  // 全ユーザーの全ログを結合（最新10件）
+  const allLogs = useMemo(() => {
+    return [...questLogs].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
+  }, [questLogs]);
+
+  // ギルド全体のランク
+  const guildGrade = useMemo(() => {
+    const focus = stats.totalFocusTime;
+    if (focus > 10000) return { name: t.guild.grades.legendary, color: 'text-yellow-500' };
+    if (focus > 5000) return { name: t.guild.grades.elite, color: 'text-purple-500' };
+    if (focus > 1000) return { name: t.guild.grades.active, color: 'text-blue-500' };
+    return { name: t.guild.grades.novice, color: 'text-emerald-500' };
+  }, [stats.totalFocusTime, t]);
+
+  // マウント前はローディングを表示
   if (!isMounted) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -25,34 +61,6 @@ export default function GuildPage() {
       </div>
     );
   }
-
-  // カテゴリに基づいてユーザーをソート
-  const sortedUsers = [...users].sort((a, b) => {
-    if (sortCategory === 'level') {
-      if (b.level !== a.level) return b.level - a.level;
-      return b.exp - a.exp;
-    } else if (sortCategory === 'time') {
-      return (b.totalFocusTime || 0) - (a.totalFocusTime || 0);
-    } else {
-      return (b.completedQuestsCount || 0) - (a.completedQuestsCount || 0);
-    }
-  });
-
-  // 全ユーザーの統計を合算
-  const totalGuildFocusTime = users.reduce((acc, u) => acc + (u.totalFocusTime || 0), 0);
-  const totalQuestsSlain = users.reduce((acc, u) => acc + (u.completedQuestsCount || 0), 0);
-
-  // 全ユーザーの全ログを結合して最新順に並べる
-  const allLogs = [...questLogs].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
-
-  // ギルド全体のランク（モック判定）
-  const getGuildGrade = () => {
-    if (totalGuildFocusTime > 10000) return { name: t.guild.grades.legendary, color: 'text-yellow-500' };
-    if (totalGuildFocusTime > 5000) return { name: t.guild.grades.elite, color: 'text-purple-500' };
-    if (totalGuildFocusTime > 1000) return { name: t.guild.grades.active, color: 'text-blue-500' };
-    return { name: t.guild.grades.novice, color: 'text-emerald-500' };
-  };
-  const guildGrade = getGuildGrade();
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 md:p-8 pt-8 max-w-5xl mx-auto animate-in fade-in duration-500 pb-24">
@@ -82,7 +90,7 @@ export default function GuildPage() {
             <span className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mb-2 block">{t.guild.totalFocus}</span>
             <div className="flex items-center justify-center gap-2 text-primary">
               <Clock className="w-5 h-5" />
-              <span className="text-3xl font-black italic tracking-tighter">{totalGuildFocusTime}</span>
+              <span className="text-3xl font-black italic tracking-tighter">{stats.totalFocusTime}</span>
               <span className="text-[10px] font-black mt-2 opacity-60 uppercase">{t.common.mins}</span>
             </div>
           </div>
@@ -91,7 +99,7 @@ export default function GuildPage() {
             <span className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mb-2 block">{t.guild.questsSlain}</span>
             <div className="flex items-center justify-center gap-2 text-primary">
               <Swords className="w-5 h-5" />
-              <span className="text-3xl font-black italic tracking-tighter">{totalQuestsSlain}</span>
+              <span className="text-3xl font-black italic tracking-tighter">{stats.totalQuestsSlain}</span>
               <span className="text-[10px] font-black mt-2 opacity-60 uppercase">{t.common.tasks}</span>
             </div>
           </div>
@@ -165,9 +173,9 @@ export default function GuildPage() {
                     {sortCategory === 'level' ? (
                       <div className="text-xs font-black italic text-primary">Lv. {user.level}</div>
                     ) : sortCategory === 'time' ? (
-                      <div className="text-xs font-black italic text-primary">{user.totalFocusTime || 0}{t.common.mins}</div>
+                      <div className="text-xs font-black italic text-primary">{(user.totalFocusTime || 0)}{t.common.mins}</div>
                     ) : (
-                      <div className="text-xs font-black italic text-primary">{user.completedQuestsCount || 0} {t.common.tasks}</div>
+                      <div className="text-xs font-black italic text-primary">{(user.completedQuestsCount || 0)} {t.common.tasks}</div>
                     )}
                     <div className="flex items-center justify-end gap-1 mt-1">
                       <div className="w-16 h-1 bg-background rounded-full border border-primary/10 overflow-hidden">
