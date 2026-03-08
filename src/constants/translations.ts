@@ -108,6 +108,38 @@ export const translations = {
       pressStart: "Enter the Guild",
       version: "v1.0.4 - Early Access",
     },
+    help: {
+      title: "Adventurer's Guide",
+      subtitle: "Master the art of focus and level up",
+      basics: {
+        title: "The Basics",
+        step1: "Choose your Quest duration (5-60m).",
+        step2: "Enter the name of the monster (task) you're slaying.",
+        step3: "Press Start and focus until the chime rings.",
+      },
+      features: {
+        title: "Key Features",
+        boss: {
+          name: "Boss Mode",
+          desc: "High stakes! Double EXP, but no pausing and failure resets progress.",
+        },
+        affinity: {
+          name: "Affinity System",
+          desc: "Change your interface theme to match your spirit from Config.",
+        },
+        ranks: {
+          name: "Titles & Ranks",
+          desc: "Unlock legendary titles by completing hidden achievements.",
+        }
+      },
+      faq: {
+        title: "Guild FAQ",
+        q1: "How is EXP calculated?",
+        a1: "EXP = Duration × Multiplier (Difficulty). Bosses double this amount!",
+        q2: "Can I save my progress?",
+        a2: "Register a Hero Scroll (Sign In) to keep your levels and logs safe.",
+      }
+    },
     profile: {
       notAuth: "Not Authenticated",
       notAuthDesc: "Please login from the Quest page to view your profile.",
@@ -296,6 +328,38 @@ export const translations = {
       subtitle: "精神を研ぎ澄まし、失われた時間を取り戻せ。",
       pressStart: "ギルドの門を叩く",
       version: "v1.0.4 - 初期アクセス",
+    },
+    help: {
+      title: "冒険者ガイド",
+      subtitle: "集中の極意を学び、レベルアップを目指せ",
+      basics: {
+        title: "基本の進め方",
+        step1: "クエストの時間（5分〜60分）を選択します。",
+        step2: "討伐するモンスター（タスク）の名前を入力します。",
+        step3: "開始ボタンを押し、チャイムが鳴るまで集中を維持します。",
+      },
+      features: {
+        title: "主要システム",
+        boss: {
+          name: "ボス討伐モード",
+          desc: "ハイリスク・ハイリターン！獲得EXPが2倍になりますが、一時停止不可で失敗時のペナルティがあります。",
+        },
+        affinity: {
+          name: "属性（テーマ）変更",
+          desc: "Config（設定）から、自分の精神に合ったUIテーマに変更できます。",
+        },
+        ranks: {
+          name: "称号システム",
+          desc: "特定の条件を達成することで、伝説的な称号をアンロックし装備できます。",
+        }
+      },
+      faq: {
+        title: "よくある質問",
+        q1: "経験値（EXP）はどう計算されますか？",
+        a1: "EXP = 集中時間 × 難易度倍率 です。ボス戦ならさらに2倍になります！",
+        q2: "進行状況を保存するには？",
+        a2: "英雄の書（サインイン）を登録することで、レベルや記録が永続化されます。",
+      }
     },
     profile: {
       notAuth: "未認証",

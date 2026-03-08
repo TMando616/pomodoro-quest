@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 // Lucide React からアイコンをインポート
-import { Moon, Sun, LogIn, LogOut, ScrollText, Volume2, VolumeX, Shield, X, Settings2 } from 'lucide-react';
+import { Moon, Sun, LogIn, LogOut, ScrollText, Volume2, VolumeX, Shield, X, Settings2, HelpCircle } from 'lucide-react';
 // 型定義と定数をインポート
 import { ThemeCategory, User } from '@/types';
 import { themes, durationOptions } from '@/constants';
@@ -80,6 +80,16 @@ export function Sidebar({
           </div>
 
           <div className="flex flex-col gap-2">
+            {/* ヘルプページへのリンク */}
+            <Link 
+              href="/help"
+              onClick={onClose}
+              className="flex items-center justify-center gap-2 w-full py-3 bg-foreground/5 border border-primary/20 rounded-xl hover:bg-foreground/10 transition-all text-[10px] font-black uppercase tracking-widest"
+            >
+              <HelpCircle className="w-4 h-4 text-primary" />
+              {t.help.title}
+            </Link>
+
             {/* 冒険の記録（履歴）を開くボタン */}
             <button 
               onClick={() => { onOpenLogs(); onClose(); }}
