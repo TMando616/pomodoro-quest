@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 // Lucide React からアイコンをインポート
-import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw, BookOpen, MessageSquare, Target, Settings2 } from 'lucide-react';
+import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw, BookOpen, MessageSquare, Target, Settings2, Swords, Shield, Sparkles } from 'lucide-react';
 // 型定義と定数をインポート
 import { QuestLog, User } from '@/types';
 import { titles } from '@/constants';
@@ -35,12 +35,10 @@ export default function PomodoroQuest() {
   const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none'); // 認証画面の状態
   const [authForm, setAuthForm] = useState({ username: '' }); // ログイン/登録フォームの入力値
   const [authError, setAuthError] = useState(""); // 認証エラーメッセージ
+  const [isStarted, setIsStarted] = useState(false); // スタート画面を抜けたか
 
   // --- カスタムフックからロジックを抽出 ---
-  // サウンド再生に関連する機能
   const { isSoundOn, playEffect, toggleSound } = useAudio();
-  
-  // ユーザーデータ、進捗、認証に関連する機能
   const { 
     currentUser, questLogs, isMounted, updateCurrentUserAndList, 
     addQuestLog, checkNewTitles, login, register, logout 
@@ -51,15 +49,13 @@ export default function PomodoroQuest() {
    * タイマーが完了した時の処理
    */
   const handleComplete = useCallback((mode: 'quest' | 'rest', isBoss: boolean, duration: number, qName: string, difficulty: Difficulty) => {
-    playEffect('complete'); // 完了音を鳴らす
+    playEffect('complete'); 
     
     if (mode === 'quest') {
-      // 経験値計算：分数 × 10。ボスモードなら2倍
       const multipliers = { easy: 1.0, normal: 1.5, hard: 2.0, insane: 3.0 };
       let earnedExp = Math.floor(duration * 10 * multipliers[difficulty]);
       if (isBoss) earnedExp *= 2;
 
-      // 履歴データの作成
       const displayName = isBoss ? `BOSS: ${qName || t.timer.ancientEvil}` : (qName || t.common.quest);
       const newLog: QuestLog = { 
         id: Date.now().toString(), 
@@ -71,10 +67,9 @@ export default function PomodoroQuest() {
         createdAt: Date.now() 
       };
       
-      addQuestLog(newLog); // 履歴に追加
+      addQuestLog(newLog); 
 
       if (currentUser) {
-        // 経験値加算とレベルアップ判定
         const newExp = currentUser.exp + earnedExp;
         let newLevel = currentUser.level;
         let finalExp = newExp;
@@ -83,12 +78,11 @@ export default function PomodoroQuest() {
           newLevel += 1; 
           finalExp = newExp - 1000; 
           setMessage(t.timer.levelUp.replace('{name}', displayName).replace('{exp}', earnedExp.toString())); 
-          setTimeout(() => playEffect('level-up'), 500); // 少し遅れてレベルアップ音
+          setTimeout(() => playEffect('level-up'), 500);
         } else { 
           setMessage(t.timer.defeated.replace('{name}', displayName).replace('{exp}', earnedExp.toString())); 
         }
 
-        // デイリーチャレンジ達成チェック
         const today = new Date().setHours(0,0,0,0);
         const todayTime = [newLog, ...questLogs]
           .filter(l => l.userId === currentUser.id && new Date(l.createdAt).setHours(0,0,0,0) === today)
@@ -101,7 +95,6 @@ export default function PomodoroQuest() {
           }, 2000);
         }
 
-        // ユーザー情報の更新
         const updatedUser: User = { 
           ...currentUser, 
           level: newLevel, 
@@ -111,27 +104,21 @@ export default function PomodoroQuest() {
         };
         updateCurrentUserAndList(updatedUser);
         
-        // 新しい称号がアンロックされたかチェック
         checkNewTitles(updatedUser, [newLog, ...questLogs], (title) => 
           setMessage(`NEW TITLE UNLOCKED: ${title}!`)
         );
       } else {
-        // 未ログインの場合のメッセージ
         setMessage(t.timer.questClear.replace('{name}', displayName).replace('{exp}', earnedExp.toString()));
       }
     } else {
-      // 休憩完了時
       setMessage(t.timer.restComplete);
     }
     
-    // 5秒後にメッセージを消す
     setTimeout(() => setMessage(""), 5000);
   }, [currentUser, playEffect, addQuestLog, updateCurrentUserAndList, checkNewTitles, questLogs, guildInfo, t]);
 
-  // タイマーのロジックを管理するカスタムフック
   const timer = useTimer({ onComplete: handleComplete });
 
-  // テーマカラーの適用（ボスモード時は強制的に赤色テーマにする。通常時は ThemeProvider が管理）
   useEffect(() => { 
     if (timer.isBossMode && timer.isActive) {
       document.documentElement.setAttribute('data-theme', 'ruby'); 
@@ -140,48 +127,86 @@ export default function PomodoroQuest() {
     }
   }, [settings.theme, timer.isBossMode, timer.isActive]);
 
-  /**
-   * 時間を MM:SS 形式に変換する
-   */
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  /**
-   * ログイン/登録ボタンが押された時の処理
-   */
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
     if (!authForm.username.trim()) return setAuthError(t.auth.errorEnterName);
 
-    // フック経由でログイン/登録を実行
     const result = isAuthMode === 'register' ? register(authForm.username) : login(authForm.username);
     
     if (result.success) {
-      setIsAuthMode('none'); // 成功したら画面を閉じる
+      setIsAuthMode('none');
     } else if (result.error) {
-      setAuthError(result.error); // 失敗したらエラー表示
+      setAuthError(result.error);
     }
     
     setAuthForm({ username: '' });
   };
 
-  // 表示用のフィルタリングされたデータ
   const userLogs = currentUser ? questLogs.filter(log => log.userId === currentUser.id) : questLogs.filter(log => log.userId === 'guest');
   const currentTitleName = titles.find(t => t.id === currentUser?.currentTitleId)?.name;
 
-  // 今日の累計集中時間を計算
   const today = new Date().setHours(0,0,0,0);
   const todayTotalMins = userLogs
     .filter(l => new Date(l.createdAt).setHours(0,0,0,0) === today)
     .reduce((acc, l) => acc + l.duration, 0);
   const dqProgress = Math.min(100, (todayTotalMins / guildInfo.dailyQuest.requirement) * 100);
 
+  /**
+   * スタート画面のレンダリング
+   */
+  if (!isStarted && isMounted) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 overflow-hidden relative">
+        {/* 背景の装飾 */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] animate-pulse delay-700" />
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center gap-12 text-center animate-in fade-in zoom-in duration-1000">
+          <div className="space-y-4">
+            <div className="flex items-center justify-center gap-4 mb-2">
+              <Shield className="w-8 h-8 text-primary opacity-40 animate-bounce" />
+              <Swords className="w-12 h-12 text-primary" />
+              <Shield className="w-8 h-8 text-primary opacity-40 animate-bounce delay-100" />
+            </div>
+            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-[0.3em] text-primary italic drop-shadow-[0_0_20px_rgba(var(--primary-rgb),0.5)]">
+              {t.start.title}
+            </h1>
+            <p className="text-xs md:text-sm font-black uppercase tracking-[0.5em] opacity-40 flex items-center justify-center gap-2">
+              <Sparkles className="w-3 h-3" /> {t.start.subtitle} <Sparkles className="w-3 h-3" />
+            </p>
+          </div>
+
+          <button 
+            onClick={() => { playEffect('level-up'); setIsStarted(true); }}
+            className="group relative px-12 py-6 bg-primary text-primary-foreground rounded-[2.5rem] font-black uppercase tracking-[0.4em] text-sm shadow-[0_0_40px_var(--color-primary-glow)] hover:scale-110 active:scale-95 transition-all duration-500 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
+            <span className="relative z-10">{t.start.pressStart}</span>
+          </button>
+
+          <div className="fixed bottom-8 flex flex-col items-center gap-2 opacity-20 hover:opacity-50 transition-opacity">
+            <span className="text-[10px] font-black uppercase tracking-widest">{t.start.version}</span>
+            <div className="flex gap-4">
+              <Trophy className="w-4 h-4" /><Crown className="w-4 h-4" /><Zap className="w-4 h-4" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // メインのクエストUI
   return (
-    <div className={`min-h-screen transition-colors duration-1000 flex flex-col items-center justify-center font-mono p-4 md:p-8 selection:bg-primary/30 overflow-x-hidden ${timer.isBossMode && timer.isActive ? 'bg-red-950/20' : 'bg-background'}`}>
+    <div className={`min-h-screen transition-colors duration-1000 flex flex-col items-center justify-center font-mono p-4 md:p-8 selection:bg-primary/30 overflow-x-hidden animate-in fade-in duration-1000 ${timer.isBossMode && timer.isActive ? 'bg-red-950/20' : 'bg-background'}`}>
       
       {/* 右上の設定トグルボタン */}
       <div className="fixed top-6 right-6 md:top-24 md:right-8 z-[60]">

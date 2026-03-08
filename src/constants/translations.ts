@@ -102,6 +102,12 @@ export const translations = {
       time: "Time",
       earnedExp: "Earned EXP",
     },
+    start: {
+      title: "Pomodoro Quest",
+      subtitle: "Focus your spirit, reclaim your time.",
+      pressStart: "Enter the Guild",
+      version: "v1.0.4 - Early Access",
+    },
     profile: {
       notAuth: "Not Authenticated",
       notAuthDesc: "Please login from the Quest page to view your profile.",
@@ -284,6 +290,12 @@ export const translations = {
       questName: "クエスト名",
       time: "時間",
       earnedExp: "獲得EXP",
+    },
+    start: {
+      title: "ポモドーロ・クエスト",
+      subtitle: "精神を研ぎ澄まし、失われた時間を取り戻せ。",
+      pressStart: "ギルドの門を叩く",
+      version: "v1.0.4 - 初期アクセス",
     },
     profile: {
       notAuth: "未認証",
