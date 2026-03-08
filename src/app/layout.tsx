@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
+import { LanguageManager } from "@/components/layout/LanguageManager";
 
 // Google Fonts の設定：Geist Sans (サンセリフ体)
 const geistSans = Geist({
@@ -40,6 +41,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground transition-colors duration-500`}
       >
         <ThemeProvider>
+          <LanguageManager />
           <Navbar />
           <main className="pb-20 md:pb-0 md:pt-20 min-h-screen">
             {children}

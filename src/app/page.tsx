@@ -230,7 +230,7 @@ export default function PomodoroQuest() {
               <Target className="w-3.5 h-3.5 text-primary" />
               <span className="text-[10px] font-black uppercase tracking-widest">{guildInfo.dailyQuest.title}</span>
             </div>
-            <span className="text-[9px] font-black opacity-40">{todayTotalMins} / {guildInfo.dailyQuest.requirement} MINS</span>
+            <span className="text-[9px] font-black opacity-40">{todayTotalMins} / {guildInfo.dailyQuest.requirement} {t.common.mins.toUpperCase()}</span>
           </div>
           <div className="w-full h-1.5 bg-background rounded-full overflow-hidden border border-foreground/5">
             <div 

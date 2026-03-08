@@ -75,7 +75,7 @@ export function HUD({ user, currentTitle }: HUDProps) {
         {/* EXP数値とサブインジケーター（点） */}
         <div className="flex justify-between items-center px-1">
           <span className="text-[10px] font-black text-primary/70 tracking-widest italic uppercase">
-            {t.common.exp} {exp} / 1000
+            {t.common.exp.toUpperCase()} {exp} / 1000
           </span>
           {/* 200EXPごとに1つ点灯するドット */}
           <div className="flex gap-1.5">

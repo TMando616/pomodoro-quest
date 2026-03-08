@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { translations } from '@/constants/translations';
 
 export type GuildInfo = {
   globalMessage: string;
@@ -17,16 +18,29 @@ export type GuildInfo = {
  */
 export function useGuild() {
   const [guildInfo, setGuildInfo] = useState<GuildInfo>(() => {
+    // 初期化時にlocalStorageから設定と言語を読み込む
+    if (typeof window === 'undefined') {
+      return { 
+        globalMessage: translations.ja.admin.defaultMsg, 
+        dailyQuest: { title: translations.ja.admin.defaultDQ, requirement: 60, rewardTitle: translations.ja.profile.badges.guildElite },
+        lastUpdated: Date.now() 
+      };
+    }
+
+    const savedSettings = localStorage.getItem('pq_settings');
+    const lang = savedSettings ? JSON.parse(savedSettings).language : 'ja';
+    const t = translations[lang as 'en' | 'ja'] || translations.ja;
+
     const defaultInfo = { 
-      globalMessage: "Welcome to the guild, new adventurer!", 
+      globalMessage: t.admin.defaultMsg, 
       dailyQuest: {
-        title: "The Hour of Power",
+        title: t.admin.defaultDQ,
         requirement: 60,
-        rewardTitle: "Daily Hero"
+        rewardTitle: t.profile.badges.guildElite
       },
       lastUpdated: Date.now() 
     };
-    if (typeof window === 'undefined') return defaultInfo;
+
     const saved = localStorage.getItem('pq_guild_info');
     return saved ? JSON.parse(saved) : defaultInfo;
   });

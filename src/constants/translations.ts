@@ -171,6 +171,8 @@ export const translations = {
       confirmReset: "Reset stats for {name}?",
       broadcastSuccess: "Message broadcasted to all guild members!",
       missionUpdated: "Daily Mission Updated!",
+      defaultMsg: "Welcome to the guild, new adventurer!",
+      defaultDQ: "The Hour of Power",
     },
     titles: {
       novice: { name: "Novice Adventurer", desc: "A beginner who just started the journey." },
@@ -352,6 +354,8 @@ export const translations = {
       confirmReset: "{name} のステータスをリセットしますか？",
       broadcastSuccess: "ギルド全員にメッセージを放送しました！",
       missionUpdated: "デイリー任務を更新しました！",
+      defaultMsg: "ギルドへようこそ、新米冒険者よ！",
+      defaultDQ: "集中の刻",
     },
     titles: {
       novice: { name: "駆け出しの冒険者", desc: "冒険を始めたばかりの新米。" },
