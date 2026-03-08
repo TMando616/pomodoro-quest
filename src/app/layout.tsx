@@ -24,6 +24,26 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Pomodoro Quest ⚔️",
   description: "Focus like a hero. A gamified pomodoro timer.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PomoQuest",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#10b981",
 };
 
 /**
