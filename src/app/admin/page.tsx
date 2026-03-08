@@ -13,7 +13,7 @@ import { useTranslation } from '@/hooks/useTranslation';
  * 管理者専用ダッシュボードページ
  */
 export default function AdminPage() {
-  const { users, currentUser, adminDeleteUser, adminUpdateUser } = useUser();
+  const { users, currentUser, isMounted, adminDeleteUser, adminUpdateUser } = useUser();
   const { guildInfo, updateGlobalMessage, updateDailyQuest } = useGuild();
   const { playEffect } = useAudio();
   const { t } = useTranslation();
@@ -23,6 +23,16 @@ export default function AdminPage() {
   const [dqReq, setDqReq] = useState(guildInfo.dailyQuest.requirement);
   const [dqReward, setDqReward] = useState(guildInfo.dailyQuest.rewardTitle);
 
+  // マウント前はハイドレーションエラー防止のためローディングを表示
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-widest mt-4 opacity-40">{t.common.loading}</p>
+      </div>
+    );
+  }
+
   // アクセス制限：管理者でない場合は警告を表示
   if (!currentUser || currentUser.role !== 'admin') {
     return (
@@ -30,7 +40,7 @@ export default function AdminPage() {
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
         <h1 className="text-xl font-black uppercase tracking-widest text-red-500">{t.admin.accessDenied}</h1>
         <Link href="/" className="mt-8 text-[10px] font-black uppercase border-b border-primary text-primary pb-1">
-          {t.admin.confirmReset.replace('{name}', t.common.quest)}
+          {t.common.back}
         </Link>
       </div>
     );

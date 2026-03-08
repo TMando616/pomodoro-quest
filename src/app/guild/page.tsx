@@ -12,9 +12,19 @@ type SortCategory = 'level' | 'time' | 'quests';
  * ギルド酒場（リーダーボード・ユーザー一覧）ページ
  */
 export default function GuildPage() {
-  const { users, currentUser, questLogs } = useUser();
+  const { users, currentUser, questLogs, isMounted } = useUser();
   const [sortCategory, setSortCategory] = useState<SortCategory>('level');
   const { t } = useTranslation();
+
+  // マウント前はハイドレーションエラー防止のためローディングを表示
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-widest mt-4 opacity-40">{t.common.loading}</p>
+      </div>
+    );
+  }
 
   // カテゴリに基づいてユーザーをソート
   const sortedUsers = [...users].sort((a, b) => {

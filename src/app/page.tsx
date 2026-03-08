@@ -42,7 +42,7 @@ export default function PomodoroQuest() {
   
   // ユーザーデータ、進捗、認証に関連する機能
   const { 
-    currentUser, questLogs, updateCurrentUserAndList, 
+    currentUser, questLogs, isMounted, updateCurrentUserAndList, 
     addQuestLog, checkNewTitles, login, register, logout 
   } = useUser();
   const { guildInfo } = useGuild();
@@ -241,7 +241,7 @@ export default function PomodoroQuest() {
         </div>
 
         {/* 上部のステータスバー */}
-        <Link href={currentUser ? "/profile" : "#"} className="w-full cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]" onClick={(e) => { if(!currentUser) { e.preventDefault(); playEffect('click'); setIsAuthMode('login'); } else { playEffect('click'); } }}>
+        <Link href={isMounted && currentUser ? "/profile" : "#"} className="w-full cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]" onClick={(e) => { if(!currentUser) { e.preventDefault(); playEffect('click'); setIsAuthMode('login'); } else { playEffect('click'); } }}>
           <HUD user={currentUser} currentTitle={currentTitleName} />
         </Link>
 

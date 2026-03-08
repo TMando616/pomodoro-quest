@@ -12,9 +12,19 @@ import { useTranslation } from '@/hooks/useTranslation';
  * 冒険者プロフィールページ
  */
 export default function ProfilePage() {
-  const { currentUser, updateCurrentUserAndList, logout } = useUser();
+  const { currentUser, isMounted, updateCurrentUserAndList, logout } = useUser();
   const { playEffect } = useAudio();
   const { t } = useTranslation();
+
+  // マウント前はハイドレーションエラー防止のため何も表示しないか、ローディングを表示
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-widest mt-4 opacity-40">{t.common.loading}</p>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (
@@ -50,8 +60,8 @@ export default function ProfilePage() {
   ];
 
   // 現在装備中の称号翻訳
-  const equippedTitleKey = currentUser.currentTitleId as keyof typeof t.titles;
-  const currentTitleName = t.titles[equippedTitleKey]?.name || "";
+  const equippedTitleKey = currentUser?.currentTitleId as keyof typeof t.titles;
+  const currentTitleName = equippedTitleKey ? (t.titles[equippedTitleKey]?.name || "") : "";
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 md:p-8 pt-8 max-w-4xl mx-auto animate-in fade-in duration-500 pb-24">

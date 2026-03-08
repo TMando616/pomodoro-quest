@@ -8,47 +8,83 @@ import { titles } from '@/constants';
  * ユーザーデータ、進捗（経験値・称号）、認証ロジックを管理するフック
  */
 export function useUser() {
-  // 全ユーザーリスト（インメモリ擬似DB）
-  const [users, setUsers] = useState<User[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const saved = localStorage.getItem('pq_users');
-    if (saved) return JSON.parse(saved);
-    // 初期データ（最初の冒険者）
-    return [{ 
-      id: '1', 
-      username: 'Hero', 
-      level: 1, 
-      exp: 0, 
-      role: 'admin', 
-      joinedAt: Date.now(),
-      totalFocusTime: 0,
-      completedQuestsCount: 0,
-      unlockedTitles: ['novice'], 
-      currentTitleId: 'novice' 
-    }];
-  });
+  // ハイドレーションエラー防止のため、初期値は常に固定
+  const [users, setUsers] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [questLogs, setQuestLogs] = useState<QuestLog[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // 現在ログイン中のユーザー
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const saved = localStorage.getItem('pq_current_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  // 全クエスト履歴
-  const [questLogs, setQuestLogs] = useState<QuestLog[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const saved = localStorage.getItem('pq_logs');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // データが変わるたびに localStorage に保存して永続化
-  useEffect(() => { if (users.length > 0) localStorage.setItem('pq_users', JSON.stringify(users)); }, [users]);
+  // マウント時に localStorage からデータを読み込む
   useEffect(() => {
-    if (currentUser) localStorage.setItem('pq_current_user', JSON.stringify(currentUser));
-    else if (users.length > 0) localStorage.removeItem('pq_current_user');
-  }, [currentUser, users.length]);
-  useEffect(() => { if (questLogs.length > 0) localStorage.setItem('pq_logs', JSON.stringify(questLogs)); }, [questLogs]);
+    const savedUsers = localStorage.getItem('pq_users');
+    const savedCurrentUser = localStorage.getItem('pq_current_user');
+    const savedLogs = localStorage.getItem('pq_logs');
+
+    if (savedUsers) {
+      try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setUsers(JSON.parse(savedUsers));
+      } catch (e) {
+        console.error("Failed to parse users", e);
+      }
+    } else {
+      // 初期データ（最初の冒険者）
+      setUsers([{ 
+        id: '1', 
+        username: 'Hero', 
+        level: 1, 
+        exp: 0, 
+        role: 'admin', 
+        joinedAt: 0,
+        totalFocusTime: 0,
+        completedQuestsCount: 0,
+        unlockedTitles: ['novice'], 
+        currentTitleId: 'novice' 
+      }]);
+    }
+
+    if (savedCurrentUser) {
+      try {
+        setCurrentUser(JSON.parse(savedCurrentUser));
+      } catch (e) {
+        console.error("Failed to parse current user", e);
+      }
+    }
+
+    if (savedLogs) {
+      try {
+        setQuestLogs(JSON.parse(savedLogs));
+      } catch (e) {
+        console.error("Failed to parse logs", e);
+      }
+    }
+
+    setIsMounted(true);
+  }, []);
+
+  // データが変わるたびに localStorage に保存して永続化（マウント後のみ）
+  useEffect(() => { 
+    if (!isMounted) return;
+    if (users.length > 0) {
+      localStorage.setItem('pq_users', JSON.stringify(users));
+    }
+  }, [users, isMounted]);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    if (currentUser) {
+      localStorage.setItem('pq_current_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('pq_current_user');
+    }
+  }, [currentUser, isMounted]);
+
+  useEffect(() => { 
+    if (!isMounted) return;
+    if (questLogs.length > 0) {
+      localStorage.setItem('pq_logs', JSON.stringify(questLogs));
+    }
+  }, [questLogs, isMounted]);
 
   /**
    * 現在のユーザー情報を更新し、同時に全体リストにも反映させる
@@ -63,7 +99,6 @@ export function useUser() {
    */
   const adminUpdateUser = useCallback((updatedUser: User) => {
     setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-    // もしログイン中の自分自身を更新した場合は、セッションも更新する
     if (currentUser?.id === updatedUser.id) {
       setCurrentUser(updatedUser);
     }
@@ -153,6 +188,7 @@ export function useUser() {
     users,
     currentUser,
     questLogs,
+    isMounted,
     setCurrentUser,
     updateCurrentUserAndList,
     adminUpdateUser,

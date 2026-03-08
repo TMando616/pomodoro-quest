@@ -12,7 +12,7 @@ import { useTranslation } from '@/hooks/useTranslation';
  * 冒険日誌（日記）ページ
  */
 export default function JournalPage() {
-  const { currentUser } = useUser();
+  const { currentUser, isMounted } = useUser();
   const { entries, addEntry, deleteEntry, updateEntry } = useJournal();
   const { playEffect } = useAudio();
   const { t } = useTranslation();
@@ -20,6 +20,16 @@ export default function JournalPage() {
   const [content, setContent] = useState("");
   const [mood, setMood] = useState<JournalEntry['mood']>('good');
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // マウント前はハイドレーションエラー防止のため何も表示しないか、ローディングを表示
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-widest mt-4 opacity-40">{t.common.loading}</p>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (
