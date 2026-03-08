@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 // Lucide React からアイコンをインポート
-import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw, BookOpen, MessageSquare, Target, Settings2, Swords, Shield, Sparkles } from 'lucide-react';
+import { Trophy, Crown, Zap, Coffee, Skull, Flame, Play, Pause, RotateCcw, BookOpen, MessageSquare, Target, Settings2, Swords, Shield, Sparkles, LogIn, UserPlus, Ghost } from 'lucide-react';
 // 型定義と定数をインポート
 import { QuestLog, User } from '@/types';
 import { titles } from '@/constants';
@@ -28,14 +28,13 @@ import { useTranslation } from '@/hooks/useTranslation';
  */
 export default function PomodoroQuest() {
   const { settings, updateSettings } = useSettings();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [message, setMessage] = useState(""); // 画面中央に表示する通知メッセージ
   const [isLogsOpen, setIsLogsOpen] = useState(false); // 履歴パネルが開いているか
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // サイドバーが開いているか
   const [isAuthMode, setIsAuthMode] = useState<'login' | 'register' | 'none'>('none'); // 認証画面の状態
   const [authForm, setAuthForm] = useState({ username: '' }); // ログイン/登録フォームの入力値
   const [authError, setAuthError] = useState(""); // 認証エラーメッセージ
-  const [isStarted, setIsStarted] = useState(false); // スタート画面を抜けたか
 
   // --- カスタムフックからロジックを抽出 ---
   const { isSoundOn, playEffect, toggleSound } = useAudio();
@@ -142,11 +141,17 @@ export default function PomodoroQuest() {
     
     if (result.success) {
       setIsAuthMode('none');
+      updateSettings({ openingSeen: true }); // ログイン・登録成功時にオープニング済みにする
     } else if (result.error) {
       setAuthError(result.error);
     }
     
     setAuthForm({ username: '' });
+  };
+
+  const startAsGuest = () => {
+    playEffect('level-up');
+    updateSettings({ openingSeen: true });
   };
 
   const userLogs = currentUser ? questLogs.filter(log => log.userId === currentUser.id) : questLogs.filter(log => log.userId === 'guest');
@@ -161,42 +166,86 @@ export default function PomodoroQuest() {
   /**
    * スタート画面のレンダリング
    */
-  if (!isStarted && isMounted) {
+  if (!settings.openingSeen && isMounted) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 overflow-hidden relative">
         {/* 背景の装飾 */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[100px] animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] animate-pulse delay-700" />
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse delay-700" />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center gap-12 text-center animate-in fade-in zoom-in duration-1000">
+        {/* 言語選択ボタン（右上） */}
+        <div className="absolute top-8 right-8 z-20 flex gap-2">
+          {(['en', 'ja'] as const).map((lang) => (
+            <button
+              key={lang}
+              onClick={() => { playEffect('click'); updateSettings({ language: lang }); }}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-2 ${language === lang ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/50 border-foreground/10 opacity-40 hover:opacity-100'}`}
+            >
+              {lang}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center gap-12 text-center w-full max-w-sm animate-in fade-in zoom-in duration-1000">
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-4 mb-2">
               <Shield className="w-8 h-8 text-primary opacity-40 animate-bounce" />
               <Swords className="w-12 h-12 text-primary" />
               <Shield className="w-8 h-8 text-primary opacity-40 animate-bounce delay-100" />
             </div>
-            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-[0.3em] text-primary italic drop-shadow-[0_0_20px_rgba(var(--primary-rgb),0.5)]">
+            <h1 className="text-5xl md:text-6xl font-black uppercase tracking-[0.3em] text-primary italic drop-shadow-[0_0_20px_rgba(var(--primary-rgb),0.5)]">
               {t.start.title}
             </h1>
-            <p className="text-xs md:text-sm font-black uppercase tracking-[0.5em] opacity-40 flex items-center justify-center gap-2">
+            <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.5em] opacity-40 flex items-center justify-center gap-2">
               <Sparkles className="w-3 h-3" /> {t.start.subtitle} <Sparkles className="w-3 h-3" />
             </p>
           </div>
 
-          <button 
-            onClick={() => { playEffect('level-up'); setIsStarted(true); }}
-            className="group relative px-12 py-6 bg-primary text-primary-foreground rounded-[2.5rem] font-black uppercase tracking-[0.4em] text-sm shadow-[0_0_40px_var(--color-primary-glow)] hover:scale-110 active:scale-95 transition-all duration-500 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
-            <span className="relative z-10">{t.start.pressStart}</span>
-          </button>
+          {isAuthMode === 'none' ? (
+            <div className="flex flex-col gap-4 w-full px-4">
+              {/* 登録ボタン */}
+              <button 
+                onClick={() => { playEffect('click'); setIsAuthMode('register'); }}
+                className="group flex items-center justify-center gap-3 w-full py-5 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-[0_0_30px_var(--color-primary-glow)] hover:scale-105 active:scale-95 transition-all duration-300"
+              >
+                <UserPlus className="w-4 h-4" />
+                {t.auth.register}
+              </button>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {/* ログインボタン */}
+                <button 
+                  onClick={() => { playEffect('click'); setIsAuthMode('login'); }}
+                  className="flex items-center justify-center gap-2 py-4 bg-foreground/5 border-2 border-primary/20 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-primary/10 hover:border-primary/40 transition-all"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  {t.auth.login}
+                </button>
+                {/* ゲストボタン */}
+                <button 
+                  onClick={startAsGuest}
+                  className="flex items-center justify-center gap-2 py-4 bg-foreground/5 border-2 border-foreground/10 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-foreground/10 transition-all opacity-60 hover:opacity-100"
+                >
+                  <Ghost className="w-3.5 h-3.5" />
+                  {t.common.guest}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <AuthOverlay 
+              isAuthMode={isAuthMode as 'login' | 'register'} authForm={authForm} authError={authError}
+              onFormChange={(username) => setAuthForm({ username })} onSubmit={(e) => { playEffect('click'); handleAuthSubmit(e); }}
+              onToggleMode={() => { playEffect('click'); setIsAuthMode(isAuthMode === 'login' ? 'register' : 'login'); }}
+              onCancel={() => { playEffect('click'); setIsAuthMode('none'); }}
+            />
+          )}
 
-          <div className="fixed bottom-8 flex flex-col items-center gap-2 opacity-20 hover:opacity-50 transition-opacity">
-            <span className="text-[10px] font-black uppercase tracking-widest">{t.start.version}</span>
+          <div className="flex flex-col items-center gap-2 opacity-20 hover:opacity-50 transition-opacity">
+            <span className="text-[9px] font-black uppercase tracking-widest">{t.start.version}</span>
             <div className="flex gap-4">
-              <Trophy className="w-4 h-4" /><Crown className="w-4 h-4" /><Zap className="w-4 h-4" />
+              <Trophy className="w-3.5 h-3.5" /><Crown className="w-3.5 h-3.5" /><Zap className="w-3.5 h-3.5" />
             </div>
           </div>
         </div>

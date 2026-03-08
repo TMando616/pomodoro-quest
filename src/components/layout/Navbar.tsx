@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, User, BookOpen, Users, Settings } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useSettings } from '@/hooks/useSettings';
 
 /**
  * アプリケーション全体のナビゲーションバー
@@ -13,6 +14,13 @@ import { useTranslation } from '@/hooks/useTranslation';
 export function Navbar() {
   const pathname = usePathname();
   const { t } = useTranslation();
+  const { settings, isMounted } = useSettings();
+
+  // スタート画面（Opening）がまだ終わっていない場合はナビゲーションを表示しない
+  // ただし、ホームページ以外のページ（/help, /settings等）に直接アクセスしている場合は表示する
+  if (isMounted && !settings.openingSeen && pathname === '/') {
+    return null;
+  }
 
   const navItems = [
     { href: '/', label: t.navbar.quest, icon: Home },

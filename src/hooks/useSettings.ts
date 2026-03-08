@@ -9,6 +9,7 @@ export type AppSettings = {
   compactHUD: boolean;
   theme: string;
   language: 'en' | 'ja';
+  openingSeen: boolean; // スタート画面を既に見たか
 };
 
 const SETTINGS_UPDATE_EVENT = 'pq-settings-updated';
@@ -17,7 +18,6 @@ const SETTINGS_UPDATE_EVENT = 'pq-settings-updated';
  * アプリケーションの全体設定を管理するフック
  */
 export function useSettings() {
-  // サーバーとクライアントの初回レンダリングを一致させるため、常にデフォルト値で開始
   const [settings, setSettings] = useState<AppSettings>({
     defaultDuration: 25,
     showNotifications: true,
@@ -25,12 +25,12 @@ export function useSettings() {
     compactHUD: false,
     theme: 'emerald',
     language: 'ja',
+    openingSeen: false,
   });
 
   const [isMounted, setIsMounted] = useState(false);
   const isInternalUpdate = useRef(false);
 
-  // マウント時に localStorage から読み込む
   useEffect(() => {
     const saved = localStorage.getItem('pq_settings');
     if (saved) {
@@ -45,11 +45,8 @@ export function useSettings() {
     setIsMounted(true);
   }, []);
 
-  // 設定が変更されたら localStorage に保存し、他のインスタンスに通知する
   useEffect(() => {
-    // マウント完了前、または外部からの更新時はスキップ
     if (!isMounted) return;
-    
     localStorage.setItem('pq_settings', JSON.stringify(settings));
     
     if (isInternalUpdate.current) {
@@ -63,7 +60,6 @@ export function useSettings() {
     setSettings((prev) => ({ ...prev, ...newSettings }));
   }, []);
 
-  // 他のインスタンスからの更新通知を購読する
   useEffect(() => {
     if (typeof window === 'undefined') return;
 

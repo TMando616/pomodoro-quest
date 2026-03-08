@@ -106,6 +106,7 @@ export const translations = {
       title: "Pomodoro Quest",
       subtitle: "Focus your spirit, reclaim your time.",
       pressStart: "Enter the Guild",
+      asGuest: "Continue as Guest",
       version: "v1.0.4 - Early Access",
     },
     help: {
@@ -327,6 +328,7 @@ export const translations = {
       title: "ポモドーロ・クエスト",
       subtitle: "精神を研ぎ澄まし、失われた時間を取り戻せ。",
       pressStart: "ギルドの門を叩く",
+      asGuest: "名もなき英雄として進む",
       version: "v1.0.4 - 初期アクセス",
     },
     help: {
